@@ -1,0 +1,116 @@
+// Input.scss
+
+$input-width: 376px;
+$input-height: 44px;
+$input-border-color: #d4d4d8;
+$input-border-active-color: #71717A;
+$auth-headers-text-color: #3f3f46;
+$auth-hint-text-color: #A1A1AA;
+$auth-primary-color: #6366F1;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+
+* {
+    font-family: 'Inter', sans-serif;
+}
+
+.auth-screen-container {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+}
+
+.auth-screen-image {
+    max-width: 700px;
+    width: 50%;
+    float: left;
+}
+
+.auth-form-container {
+    display: flex;
+    // flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 32px;
+    width: 50%;
+}
+
+
+.auth-top-text-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 0px;
+}
+
+.auth-text-huge {
+    margin: 0px;
+    font-size: 36px;
+    color: $auth-headers-text-color;
+    font-weight: 600; // Semi-bold style
+}
+
+.auth-text-medium {
+    margin: 0px;
+    color: $auth-hint-text-color;
+    font-size: 18px;
+    font-weight: normal;
+}
+
+.auth-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    align-items: center;
+    padding: 0px;
+}
+
+.auth-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin: 0px;
+
+    label {
+        font-weight: bold;
+        font-size: 14px;
+        color: $auth-headers-text-color;
+        margin-right: auto;
+        padding-bottom: 6px;
+    }
+
+    input[name="auth-input"] {
+        box-sizing: border-box;
+        width: $input-width;
+        height: $input-height;
+        border: 1px solid $input-border-color;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 16px;
+        text-align: left;
+        line-height: $input-height;
+        color: $auth-hint-text-color;
+
+        &:focus {
+            outline-color: $input-border-active-color;
+            color: #000000;
+        }
+    }
+
+    button[name="auth-continue"] {
+        border: 1px solid $auth-primary-color;
+        box-sizing: border-box;
+        box-shadow: none;
+        width: $input-width;
+        height: $input-height;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 16px;
+        text-align: center;
+        line-height: $input-height;
+        color: white;
+        background-color: $auth-primary-color;
+    }
+}
