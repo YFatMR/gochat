@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import Store from "./store/store"
+import { ScreenState, Store } from "./store/store"
 
 const store = new Store()
 
