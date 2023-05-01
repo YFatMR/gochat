@@ -1,142 +1,173 @@
-import { FC, useContext, useState, useEffect } from "react";
+import { FC, useContext, useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Chat, ChatProps } from "../components/chat/Chat";
 import { Message, MessageProps } from "../components/chat/Message";
 import { ChatService } from "../services/ChatService";
 import { ChatsResponse, MessagesResponse } from "../types/Chats"
 import "../styles/css/Chats.css";
-import { off } from "process";
+import { useInView } from 'react-intersection-observer';
+
+
+const chatsFromResponse = (response: ChatsResponse, onClickHandler: any): ChatProps[] => {
+    return response.dialogs ? response.dialogs.map(dialog => {
+        const date = new Date(dialog.lastMessage.createdAt);
+        const messagesCount = parseInt(dialog.messagesCount) || 0
+        const messageID = parseInt(dialog.lastMessage.messageID.ID)
+        return {
+            key: dialog.dialogID.ID,
+            id: parseInt(dialog.dialogID.ID),
+            messageID: messageID,
+            name: dialog.name,
+            messageText: dialog.lastMessage.text,
+            messageTimestamp: `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`,
+            unreadMessagesCount: parseInt(dialog.unreadMessagesCount) || 0,
+            messagesCount: messagesCount,
+            onClick: onClickHandler(dialog.dialogID.ID, messageID), //handleDialogClick(dialog.dialogID.ID, messagesCount),
+            observerBottomRef: null,
+            active: false,
+        }
+    }) : []
+}
+
+const messagesFromResponse = (response: MessagesResponse): MessageProps[] => {
+    return response.messages ? response.messages.map(message => {
+        const date = new Date(message.createdAt);
+        return {
+            key: message.messageID.ID,
+            id: parseInt(message.messageID.ID),
+            senderID: parseInt(message.senderID.ID),
+            text: message.text,
+            createdAt: `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`,
+            selfMessage: message.selfMessage,
+            observerTopRef: null,
+        }
+    }) : []
+}
+
 
 const ChatsPage: FC = () => {
+    const { ref: bottomDialogRef, inView: bottomDialogInView } = useInView({
+        threshold: 0,
+    });
+    const { ref: topMessageRef, inView: topMessageInView } = useInView({
+        threshold: 0,
+    });
+
     const navigate = useNavigate();
     const [chats, setChats] = useState<ChatProps[]>([]);
-    const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState<MessageProps[]>([]);
 
-    const DIALOG_HEIGHT = 80
-    const dialogMessagesPerRequest = 50;
+    // const [activeDialog, setActiveDialog] = useState<string>("");
+
+
+
+    const dialogMessagesPerRequest = 40;
     const chatsCountPerRequest = 30
 
-    const calcOffset = (overallMessages: number, messagesAlreadyLoaded: number, limit: number): number => {
-        const res = (overallMessages - messagesAlreadyLoaded - limit)
-        return res <= 0 ? 0 : res
-    }
-
-    const messagesFromResponse = (response: MessagesResponse): MessageProps[] => {
-        return response.messages ? response.messages.map(message => {
-            const date = new Date(message.createdAt);
-            return {
-                key: message.messageID.ID,
-                senderID: message.senderID.ID,
-                text: message.text,
-                createdAt: `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`,
-                selfMessage: message.selfMessage,
-            }
-        }) : []
-    }
-
-    const handleDialogClick = async (chatID: string, overallMessages: number): Promise<() => Promise<void>> => {
+    const handleDialogClick = async (chatID: number, topMessageID: number): Promise<() => Promise<void>> => {
         return async () => {
-            const diff = overallMessages - dialogMessagesPerRequest
-            const offset = diff > 0 ? diff : 0
-            const newMessagesResponse = await ChatService.getMessages(chatID, dialogMessagesPerRequest, offset);
-            console.log(newMessagesResponse)
-            console.log("dialog click")
+            const newMessagesResponse = await ChatService.getMessagesBefore(chatID, topMessageID, dialogMessagesPerRequest);
+            console.log("newMessagesResponse", newMessagesResponse)
             if (newMessagesResponse.status != 200) {
                 return
             }
-            setMessages(messagesFromResponse(newMessagesResponse.data))
+            const newMessages = messagesFromResponse(newMessagesResponse.data)
+            if (newMessages.length === 0) {
+                return
+            }
+            newMessages[0].observerTopRef = topMessageRef
+            setMessages(newMessages)
+            // setActiveDialog(chatID)
         }
     }
 
-    const chatsFromResponse = (response: ChatsResponse): ChatProps[] => {
-        return response.dialogs ? response.dialogs.map(dialog => {
-            const date = new Date(dialog.lastMessage.createdAt);
-            const messagesCount = parseInt(dialog.messagesCount) || 0
-            return {
-                key: dialog.dialogID.ID,
-                name: dialog.name,
-                messageText: dialog.lastMessage.text,
-                messageTimestamp: `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`,
-                unreadMessagesCount: parseInt(dialog.unreadMessagesCount) || 0,
-                messagesCount: messagesCount,
-                onClick: handleDialogClick(dialog.dialogID.ID, messagesCount),
-            }
-        }) : []
-    }
-
-    const loadInitialChats = async () => {
-        if (loading) return;
-        setLoading(true);
-        const initChatsResponse = await ChatService.getDialogs(chatsCountPerRequest, chats.length)
-
-        if (initChatsResponse.status != 200) {
-            setLoading(false);
+    const fetchBottomChats = async () => {
+        const response = await ChatService.getDialogs(chatsCountPerRequest, chats.length);
+        console.log("fetchBottomChats response", response, "chat length", chats.length)
+        if (response.status != 200) {
             navigate("")
             return
         }
-        console.log("initChats response", initChatsResponse)
-        setChats(chatsFromResponse(initChatsResponse.data))
-        setLoading(false);
-    }
-
-    const loadMoreChats = async () => {
-        if (loading) return;
-        setLoading(true);
-        const load = async () => {
-            const newChatsResponse = await ChatService.getDialogs(chatsCountPerRequest, chats.length);
-
-            console.log("loadMoreChats response", newChatsResponse)
-            const newChats = chatsFromResponse(newChatsResponse.data)
-            if (newChats.length === 0) {
-                return
-            }
-            setChats([...chats, ...newChats]);
+        const newChats = chatsFromResponse(response.data, handleDialogClick)
+        if (newChats.length === 0) {
+            return
         }
-        await load()
-        setLoading(false);
-    }
-
-    const loadMoreMessages = async () => {
-        if (loading) return;
-        setLoading(true);
-        const load = async () => {
-            const newChatsResponse = await ChatService.getDialogs(chatsCountPerRequest, chats.length);
-
-            console.log("loadMoreChats response", newChatsResponse)
-            const newChats = chatsFromResponse(newChatsResponse.data)
-            if (newChats.length === 0) {
-                return
-            }
-            setChats([...chats, ...newChats]);
+        newChats[newChats.length - 1].observerBottomRef = bottomDialogRef
+        if (chats.length === 0) {
+            setChats(newChats)
+            return
         }
-        await load()
-        setLoading(false);
+        chats[chats.length - 1].observerBottomRef = null
+        setChats([...chats, ...newChats]);
     }
 
+    const fetchTopDialogMessages = async (chatID: number, topMessageID: number) => {
+        const response = await ChatService.getMessagesBefore(chatID, topMessageID, dialogMessagesPerRequest);
+        console.log("fetchTopDialogMessages response", response)
+        if (response.status != 200) {
+            navigate("")
+            return
+        }
+        const newMessages = messagesFromResponse(response.data)
+        if (newMessages.length === 0) {
+            return
+        }
+        newMessages[0].observerTopRef = topMessageRef
+        if (messages.length === 0) {
+            setMessages(newMessages)
+            return
+        }
+        messages[0].observerTopRef = null
+        setMessages([...newMessages, ...messages]);
+    }
+
+    // init list of dialogs
     useEffect(() => {
-        loadInitialChats();
+        fetchBottomChats()
     }, []);
 
-    const handleScroll = (event: any) => {
-        const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-        if (scrollHeight - (scrollTop + clientHeight) < 10 * DIALOG_HEIGHT) {
-            loadMoreChats();
+    // dialog list updating
+    useEffect(() => {
+        if (!bottomDialogInView) {
+            return
         }
-    };
+        fetchBottomChats()
+    }, [bottomDialogInView])
+
+    // messages list updating
+    useEffect(() => {
+        if (!topMessageInView) {
+            return
+        }
+        const id = parseInt(topMessageRef.arguments?.id);
+        console.log("messages list updating with id", id)
+        fetchTopDialogMessages(id, messages[0].id)
+    }, [topMessageInView])
+
+    // active dialog updating
+    // useEffect(() => {
+    //     if (activeDialog == "") {
+    //         return
+    //     }
+    //     fetchBottomChats()
+    // }, [activeDialog])
 
     return (
         <div className="main-container">
-            <div className="chats-container" onScroll={handleScroll}>
+            <div className="chats-container">
                 {chats.map((chat) => (
                     <Chat
                         key={chat.key}
+                        id={chat.id}
+                        messageID={chat.messageID}
                         name={chat.name}
                         messageText={chat.messageText}
                         unreadMessagesCount={chat.unreadMessagesCount}
                         messageTimestamp={chat.messageTimestamp}
                         messagesCount={chat.messagesCount}
                         onClick={chat.onClick}
+                        observerBottomRef={chat.observerBottomRef}
+                        active={chat.active}
                     />
                 ))}
             </div>
@@ -148,6 +179,8 @@ const ChatsPage: FC = () => {
                         text={message.text}
                         createdAt={message.createdAt}
                         selfMessage={message.selfMessage}
+                        id={message.id}
+                        observerTopRef={message.observerTopRef}
                     />
                 ))}
             </div>

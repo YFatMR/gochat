@@ -4,10 +4,12 @@ import "../../styles/css/Chats.css";
 
 export interface MessageProps {
     key: string,
-    senderID: string,
+    id: number,
+    senderID: number,
     text: string;
     createdAt: string,
     selfMessage: boolean,
+    observerTopRef: any,
 }
 
 

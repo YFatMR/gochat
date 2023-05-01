@@ -7,7 +7,11 @@ export class ChatService {
         return $api.get(`/v1/dialogs?limit=${limit}&offset=${offset}`)
     }
 
-    static async getMessages(chatID: string, limit: number, offset: number): Promise<AxiosResponse<MessagesResponse>> {
-        return $api.get(`/v1/dialogs/${chatID}/messages?limit=${limit}&offset=${offset}`)
+    static async getMessagesBefore(chatID: number, beforeMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
+        return $api.get(`/v1/dialogs/${chatID}/messages/${beforeMessageID}?limit=${limit}&offset_type=before`)
+    }
+
+    static async getMessagesAfter(chatID: number, beforeMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
+        return $api.get(`/v1/dialogs/${chatID}/messages/${beforeMessageID}?limit=${limit}&offset_type=after`)
     }
 }
