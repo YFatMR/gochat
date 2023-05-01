@@ -1,6 +1,6 @@
 import React, { FC } from "react";
+import "../../styles/css/Auth.css";
 
-import "../../assets/css/LoginFormInput.css";
 
 interface LoginInputProps {
     label: string;
@@ -10,7 +10,8 @@ interface LoginInputProps {
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export const LoginInput: FC<LoginInputProps> = ({ label, value, type, placeholder, onChange }) => {
+
+export const InputField: FC<LoginInputProps> = ({ label, value, type, placeholder, onChange }) => {
     return (
         <div className="auth-input-wrapper">
             <label htmlFor="auth-input">{label}</label>
@@ -21,19 +22,6 @@ export const LoginInput: FC<LoginInputProps> = ({ label, value, type, placeholde
                 type={type}
                 placeholder={placeholder}
             />
-        </div>
-    );
-};
-
-interface LoginContinueProps {
-    value: string;
-    onClick: () => void;
-}
-
-export const LoginContinue: FC<LoginContinueProps> = ({ value, onClick }) => {
-    return (
-        <div className="auth-input-wrapper">
-            <button name="auth-continue" onClick={onClick}>{value}</button>
         </div>
     );
 };

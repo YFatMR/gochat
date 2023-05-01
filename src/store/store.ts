@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx"
-import AuthService from "../services/AuthService";
-
+import { AuthService } from "../services/AuthService";
+import { ChatService } from "../services/ChatService"
 export enum ScreenState {
     Registration,
     Autorization,
@@ -8,42 +8,19 @@ export enum ScreenState {
 }
 
 export class Store {
-    isAuth = false;
-    screenState = ScreenState.Autorization
-
     constructor() {
         makeAutoObservable(this)
     }
 
-
-    setAuth(auth: boolean) {
-        this.isAuth = auth
-    }
-
-    setAutorizationState() {
-        this.screenState = ScreenState.Autorization
-    }
-
-    setRegistrationState() {
-        this.screenState = ScreenState.Registration
-    }
-
-    setMainState() {
-        this.screenState = ScreenState.Main
-    }
-
-    async login(login: string, password: string) {
+    async login(email: string, password: string) {
         try {
-            const response = await AuthService.login(login, password)
+            const response = await AuthService.login(email, password)
             console.log(response)
             localStorage.setItem("token", response.data.accessToken)
-            this.setAuth(true)
             if (response.status === 200) {
-                this.setMainState()
                 return true
             }
         } catch (e) {
-            // console.log(e.response?.data?.message)
             console.log("Error", e)
         }
         return false
@@ -55,13 +32,9 @@ export class Store {
             console.log(response)
             localStorage.setItem("userID", response.data.ID)
             if (response.status === 200) {
-                this.setAutorizationState()
                 return true
             }
-
-            // this.setAuth(true)
         } catch (e) {
-            // console.log(e.response?.data?.message)
             console.log("Error", e)
         }
         return false
@@ -70,7 +43,6 @@ export class Store {
     async checkAuth() {
         try {
         } catch (e) {
-            // console.log(e.response?.data?.message)
             console.log("Error", e)
         }
     }

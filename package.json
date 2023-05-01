@@ -16,6 +16,7 @@
     "mobx-react-lite": "^3.4.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.10.0",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
@@ -25,7 +26,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "scss": "sass ./src/assets/scss/LoginFormInput.scss ./src/assets/css/LoginFormInput.css",
+    "sass": "sass ./src/styles/Auth.scss:./src/styles/css/Auth.css ./src/styles/Chats.scss:./src/styles/css/Chats.css",
     "scss-watch": "node-sass --watch src/assets/scss -o src/assets/css"
   },
   "eslintConfig": {
