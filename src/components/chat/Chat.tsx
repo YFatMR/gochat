@@ -14,14 +14,15 @@ export interface ChatProps {
     messagesCount: number,
     onClick: OnClickType,
     observerBottomRef: any,
-    active: boolean,
+    activeDialogRef: any,
 }
 
 
 export const Chat: FC<ChatProps> = ({ id, observerBottomRef, name, messageText, messageTimestamp, unreadMessagesCount, onClick }) => {
     return (
-        <button className="chat" onClick={async () => await (await onClick)()} ref={observerBottomRef} id={id.toString()}>
+        <button className="chat" onClick={async () => await (await onClick)()} ref={observerBottomRef} name={id.toString()}>
             {/* <img src="path/to/image.png" alt="Изображение"></img> */}
+            <span id={id.toString()}></span>
             <div className="container">
                 <div className="title">{name}</div>
                 <div className="text">{messageText}</div>
@@ -30,6 +31,7 @@ export const Chat: FC<ChatProps> = ({ id, observerBottomRef, name, messageText, 
                 <span className="time">{messageTimestamp}</span>
                 <span className="unread-messages-count">{unreadMessagesCount}</span>
             </div>
+
         </button>
     );
 };

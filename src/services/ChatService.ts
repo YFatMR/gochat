@@ -11,7 +11,7 @@ export class ChatService {
         return $api.get(`/v1/dialogs/${chatID}/messages/${beforeMessageID}?limit=${limit}&offset_type=before`)
     }
 
-    static async getMessagesAfter(chatID: number, beforeMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
-        return $api.get(`/v1/dialogs/${chatID}/messages/${beforeMessageID}?limit=${limit}&offset_type=after`)
+    static async getMessagesAfter(chatID: number, afterMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
+        return $api.get(`/v1/dialogs/${chatID}/messages/${afterMessageID}?limit=${limit}&offset_type=after`)
     }
 }

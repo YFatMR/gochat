@@ -12,7 +12,8 @@ const chatsFromResponse = (response: ChatsResponse, onClickHandler: any): ChatPr
     return response.dialogs ? response.dialogs.map(dialog => {
         const date = new Date(dialog.lastMessage.createdAt);
         const messagesCount = parseInt(dialog.messagesCount) || 0
-        const messageID = parseInt(dialog.lastMessage.messageID.ID)
+        // + 1 to include last message
+        const messageID = parseInt(dialog.lastMessage.messageID.ID) + 1
         return {
             key: dialog.dialogID.ID,
             id: parseInt(dialog.dialogID.ID),
@@ -22,9 +23,9 @@ const chatsFromResponse = (response: ChatsResponse, onClickHandler: any): ChatPr
             messageTimestamp: `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`,
             unreadMessagesCount: parseInt(dialog.unreadMessagesCount) || 0,
             messagesCount: messagesCount,
-            onClick: onClickHandler(dialog.dialogID.ID, messageID), //handleDialogClick(dialog.dialogID.ID, messagesCount),
+            onClick: onClickHandler(dialog.dialogID.ID, messageID),
             observerBottomRef: null,
-            active: false,
+            activeDialogRef: null,
         }
     }) : []
 }
@@ -57,7 +58,7 @@ const ChatsPage: FC = () => {
     const [chats, setChats] = useState<ChatProps[]>([]);
     const [messages, setMessages] = useState<MessageProps[]>([]);
 
-    // const [activeDialog, setActiveDialog] = useState<string>("");
+    const [activeDialogID, setActiveDialogID] = useState<number>(0);
 
 
 
@@ -72,12 +73,12 @@ const ChatsPage: FC = () => {
                 return
             }
             const newMessages = messagesFromResponse(newMessagesResponse.data)
+            setActiveDialogID(chatID)
             if (newMessages.length === 0) {
                 return
             }
             newMessages[0].observerTopRef = topMessageRef
             setMessages(newMessages)
-            // setActiveDialog(chatID)
         }
     }
 
@@ -139,18 +140,8 @@ const ChatsPage: FC = () => {
         if (!topMessageInView) {
             return
         }
-        const id = parseInt(topMessageRef.arguments?.id);
-        console.log("messages list updating with id", id)
-        fetchTopDialogMessages(id, messages[0].id)
+        fetchTopDialogMessages(activeDialogID, messages[0].id)
     }, [topMessageInView])
-
-    // active dialog updating
-    // useEffect(() => {
-    //     if (activeDialog == "") {
-    //         return
-    //     }
-    //     fetchBottomChats()
-    // }, [activeDialog])
 
     return (
         <div className="main-container">
@@ -167,7 +158,7 @@ const ChatsPage: FC = () => {
                         messagesCount={chat.messagesCount}
                         onClick={chat.onClick}
                         observerBottomRef={chat.observerBottomRef}
-                        active={chat.active}
+                        activeDialogRef={chat.activeDialogRef}
                     />
                 ))}
             </div>
