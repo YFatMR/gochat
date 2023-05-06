@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import "../../styles/css/Chats.css";
 
-export type OnClickType = Promise<() => Promise<void>>
+export type OnClickType = () => Promise<void>
 
 export interface ChatProps {
     key: string,
@@ -13,14 +13,16 @@ export interface ChatProps {
     unreadMessagesCount: number,
     messagesCount: number,
     onClick: OnClickType,
-    observerBottomRef: any,
-    activeDialogRef: any,
+    isActive: boolean,
 }
 
 
-export const Chat: FC<ChatProps> = ({ id, observerBottomRef, name, messageText, messageTimestamp, unreadMessagesCount, onClick }) => {
+export const Chat: FC<ChatProps> = ({ id, name, messageText, messageTimestamp, unreadMessagesCount, onClick, isActive }) => {
+    const onChatClick = () => {
+        onClick();
+    }
     return (
-        <button className="chat" onClick={async () => await (await onClick)()} ref={observerBottomRef} name={id.toString()}>
+        <button className={isActive ? 'chat_active chat' : 'chat'} onClick={onChatClick} name={id.toString()}>
             {/* <img src="path/to/image.png" alt="Изображение"></img> */}
             <span id={id.toString()}></span>
             <div className="container">

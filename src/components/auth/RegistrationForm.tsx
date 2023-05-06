@@ -63,6 +63,7 @@ const RegistrationForm: FC = () => {
                         </div>
                         <ContinueButton
                             value="Continue"
+                            isLoading={false}
                             onClick={() => store.registration(name, surname, nickname, login, password)}
                         />
                     </div>

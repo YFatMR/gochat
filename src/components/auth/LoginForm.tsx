@@ -17,9 +17,22 @@ interface LoginFormProps {
 export const LoginForm: FC<LoginFormProps> = ({ successRedirectUrl }) => {
     const [email, setEmail] = useState<string>("")
     const [password, setPassword] = useState<string>("")
+    const [isLoading, setIsLoading] = useState<boolean>(false)
     const navigate = useNavigate();
 
     const { store } = useContext(Context)
+
+    const login = async () => {
+        if (isLoading) return;
+
+        setIsLoading(true);
+        const success = await store.login(email, password);
+        setIsLoading(false);
+
+        if (success) {
+            navigate(successRedirectUrl)
+        }
+    }
     return (
         <div className="half-center">
             <div className="auth-form-main-container">
@@ -49,12 +62,8 @@ export const LoginForm: FC<LoginFormProps> = ({ successRedirectUrl }) => {
 
                         <ContinueButton
                             value="Continue"
-                            onClick={async () => {
-                                const sucess = await store.login(email, password)
-                                if (sucess) {
-                                    navigate(successRedirectUrl)
-                                }
-                            }}
+                            isLoading={isLoading}
+                            onClick={login}
                         />
                     </div>
                     <p className="auth-text-small">Do not have an account? <Link to="/register" relative="path">Sign up</Link></p>

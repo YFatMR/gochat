@@ -29,3 +29,13 @@ export interface ChatsResponse {
 export interface MessagesResponse {
     messages: Message[];
 };
+
+export interface ChatInfo {
+    id: number,
+    messageID: number;
+    name: string,
+    messageText: string;
+    messageTimestamp: string,
+    unreadMessagesCount: number,
+    messagesCount: number,
+}

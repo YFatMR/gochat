@@ -64,6 +64,36 @@
   background-color: #FAFAFA;
 }
 
+.chat_active {
+  width: 280px;
+  height: 80px;
+  padding: 12px;
+  border: 0px solid magenta;
+  border-radius: 12px;
+  box-sizing: border-box;
+  box-shadow: none;
+  background-color: magenta;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.chat_active .chat-text {
+  width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-height: 36px;
+  /* 2 строки по 18 пикселей в высоту */
+}
+.chat_active img {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+}
+.chat_active:hover {
+  background-color: magenta;
+}
+
 .container {
   display: flex;
   flex-direction: column;
