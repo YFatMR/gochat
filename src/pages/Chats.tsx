@@ -41,6 +41,7 @@ const messagesFromResponse = (response: MessagesResponse): MessageProps[] => {
             createdAt: `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`,
             selfMessage: message.selfMessage,
             observerTopRef: null,
+            observerBottomRef: null,
         }
     }) : []
 }
@@ -53,14 +54,16 @@ const ChatsPage: FC = () => {
     const { ref: topMessageRef, inView: topMessageInView } = useInView({
         threshold: 0,
     });
+    const { ref: bottomMessageRef, inView: bottomMessageInView } = useInView({
+        threshold: 0,
+    });
 
     const navigate = useNavigate();
     const [chats, setChats] = useState<ChatProps[]>([]);
     const [messages, setMessages] = useState<MessageProps[]>([]);
 
     const [activeDialogID, setActiveDialogID] = useState<number>(0);
-
-
+    const messagesScrollerRef = useRef<HTMLDivElement>(null);
 
     const dialogMessagesPerRequest = 40;
     const chatsCountPerRequest = 30
@@ -78,7 +81,14 @@ const ChatsPage: FC = () => {
                 return
             }
             newMessages[0].observerTopRef = topMessageRef
+            newMessages[newMessages.length - 1].observerBottomRef = messagesScrollerRef
             setMessages(newMessages)
+
+            // if (bottomMessageRef != null && bottomMessageRef != undefined) {
+            //     bottomMessageRef.arguments?.scrollIntoView({ behavior: "smooth" });
+            // }
+
+            messagesScrollerRef.current?.scrollIntoView();
         }
     }
 
@@ -162,18 +172,22 @@ const ChatsPage: FC = () => {
                     />
                 ))}
             </div>
-            <div className="messages-container">
-                {messages.map((message) => (
-                    <Message
-                        key={message.key}
-                        senderID={message.senderID}
-                        text={message.text}
-                        createdAt={message.createdAt}
-                        selfMessage={message.selfMessage}
-                        id={message.id}
-                        observerTopRef={message.observerTopRef}
-                    />
-                ))}
+            <div className="right-container">
+                <div className="messages-container" ref={messagesScrollerRef}>
+                    {messages.map((message) => (
+                        <Message
+                            key={message.key}
+                            senderID={message.senderID}
+                            text={message.text}
+                            createdAt={message.createdAt}
+                            selfMessage={message.selfMessage}
+                            id={message.id}
+                            observerTopRef={message.observerTopRef}
+                            observerBottomRef={message.observerBottomRef}
+                        />
+                    ))}
+                </div>
+                <textarea className="message-textarea" placeholder="Введите текст..."></textarea>
             </div>
         </div>
     );
