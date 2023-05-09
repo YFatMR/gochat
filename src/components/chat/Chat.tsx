@@ -11,7 +11,6 @@ export interface ChatProps {
     messageText: string;
     messageTimestamp: string,
     unreadMessagesCount: number,
-    messagesCount: number,
     onClick: OnClickType,
     isActive: boolean,
 }

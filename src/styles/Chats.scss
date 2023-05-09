@@ -171,7 +171,7 @@
 .messages-container {
     width: 700px;
     box-sizing: border-box;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 100px);
     overflow: auto;
     overflow-y: scroll;
     overflow-x: hidden;
@@ -197,7 +197,13 @@
         border: 0px;
         /* padding вокруг плашки */
     }
+
+    &_disable-scroll {
+        overflow: hidden;
+    }
 }
+
+
 
 .chat-message-info-container {
     height: 54px;
@@ -264,18 +270,53 @@
 
 // MESSAGE ======================================================================
 
+.current-message-container {
+    width: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.message-active-image {
+    width: 20px;
+    height: 20px;
+}
+
 .message-textarea {
     width: 500px;
     border: 1px solid #D4D4D8;
     padding: 10px;
     font-size: 16px;
     resize: none;
-    overflow: auto;
-    // max-height: 100px;
-    margin: auto;
+    overflow-x: hidden !important;
+    overflow-y: scroll !important;
+    margin-right: 10px;
+    max-height: 75px;
     color: #000000;
 
     &::placeholder {
         color: #A1A1AA;
+    }
+
+    &::-webkit-scrollbar {
+        width: 8px;
+        /* ширина scrollbar */
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #F7F7F7;
+        /* цвет дорожки */
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #dadce0;
+        /* цвет плашки */
+        border-radius: 20px;
+        /* закругления плашки */
+        border: 0px;
+        /* padding вокруг плашки */
     }
 }
