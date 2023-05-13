@@ -4,13 +4,22 @@ import { Chat } from "../components/chat/Chat";
 import { Message, MessageProps } from "../components/chat/Message";
 import ContextMenu from "../components/chat/ContextMenu";
 import { ChatService } from "../services/ChatService";
-import { ChatsResponse, MessagesResponse, ChatInfo, Dialog, MessageInfo, MessageResponse, NewMessageWSEvent, ViewedMessageWSEvent } from "../types/Chats"
+import {
+    ChatsResponse,
+    MessagesResponse,
+    ChatInfo, Dialog,
+    MessageInfo, MessageResponse,
+    NewMessageWSEvent,
+    ViewedMessageWSEvent,
+    MessageWindowState
+} from "../types/Chats"
 import "../styles/css/Chats.css";
 import Observer from "../components/common/Observer";
 import sendMessageActive from "../assets/sendMessageActive.png";
 import { API_HOST } from "../http/index"
 import useWebSocket from 'react-use-websocket';
 import autosize from 'autosize';
+import classnames from 'classnames';
 
 const chatInfoFromResponse = (dialog: Dialog): ChatInfo => {
     return {
@@ -60,10 +69,6 @@ const messagesInfoFromResponse = (response: MessagesResponse): MessageInfo[] => 
     }) : []
 }
 
-enum MessageWindowState {
-    SELECTABLE,
-    NORMAL,
-}
 
 
 const ChatsPage: FC = () => {
@@ -87,14 +92,29 @@ const ChatsPage: FC = () => {
     const [messageWindowState, setMessageWindowState] = useState<MessageWindowState>(MessageWindowState.NORMAL);
     const [showMenu, setShowMenu] = useState<Boolean>(false);
     const [menuPosition, setMenuPosition] = useState<Record<string, number>>({ x: 0, y: 0 });
+    const [selectedMessagesId, setSelectedMessagesId] = useState<Set<number>>(new Set());
 
-    const handleContextMenu = (event: MouseEvent<HTMLDivElement>) => {
+    const handleSelectMessage = (id: number) => {
+        const newSelectedMessagesId = new Set(selectedMessagesId);
+
+        if (newSelectedMessagesId.has(id)) {
+            newSelectedMessagesId.delete(id)
+        } else {
+            newSelectedMessagesId.add(id)
+        }
+
+        setSelectedMessagesId(newSelectedMessagesId)
+    }
+
+    const handleContextMenu = (event: MouseEvent<HTMLDivElement>, messageId: number) => {
         event.preventDefault();
 
         if (showMenu) {
             handleCloseMenu();
             return;
         }
+
+        handleSelectMessage(messageId);
 
         setMenuPosition({ x: event.clientX, y: event.clientY });
 
@@ -106,6 +126,13 @@ const ChatsPage: FC = () => {
     };
 
     useEffect(() => {
+        if (selectedMessagesId.size === 0) {
+            setMessageWindowState(MessageWindowState.NORMAL);
+        }
+    }, [selectedMessagesId.size])
+
+
+    useEffect(() => {
         handleCloseMenu();
     }, [activeDialog?.id])
 
@@ -115,6 +142,15 @@ const ChatsPage: FC = () => {
         top: `${menuPosition.y}px`,
         left: `${menuPosition.x}px`
     } as React.CSSProperties;
+
+    const menuItems = [
+        {
+            title: 'Select',
+            callback: () => {
+                setMessageWindowState(MessageWindowState.SELECTABLE);
+            }
+        }
+    ]
 
     const [messageText, setMessageText] = useState<string>('');
 
@@ -385,8 +421,8 @@ const ChatsPage: FC = () => {
                 }} />
             </div>
             <div className="right-container">
-                {showMenu && <ContextMenu handleCloseMenu={handleCloseMenu} menuStyle={menuStyle} />}
-                <div onContextMenu={handleContextMenu} ref={messagesContainerRef} className={`messages-container ${showMenu ? 'messages-container_disable-scroll' : null}`}>
+                {showMenu && <ContextMenu items={menuItems} menuStyle={menuStyle} />}
+                <div ref={messagesContainerRef} className={`messages-container ${showMenu ? "messages-container_disable-scroll" : ""}`}>
                     {messages.length ?
                         <>
                             <Observer onIntercept={async () => {
@@ -402,16 +438,21 @@ const ChatsPage: FC = () => {
                                 setFetchingDialogs(false)
                             }} />
                             {messages.map((message) => (
-                                <Message
-                                    key={message.id.toString()}
-                                    text={message.text}
-                                    createdAt={`${message.createdAt.getHours()}:${message.createdAt.getMinutes().toString().padStart(2, '0')}`}
-                                    selfMessage={message.selfMessage}
-                                    id={message.id}
-                                    lastMessageObserver={message.lastMessageObserver}
-                                    viewed={message.viewed}
-                                    onIntercept={() => { onMessageIntercept(message) }}
-                                />
+                                <div className={classnames({ "message-outer-container": message.selfMessage })} key={message.id.toString()} onContextMenu={(e) => { handleContextMenu(e, message.id) }}>
+                                    <Message
+
+                                        text={message.text}
+                                        createdAt={`${message.createdAt.getHours()}:${message.createdAt.getMinutes().toString().padStart(2, '0')}`}
+                                        selfMessage={message.selfMessage}
+                                        id={message.id}
+                                        lastMessageObserver={message.lastMessageObserver}
+                                        viewed={message.viewed}
+                                        onIntercept={() => { onMessageIntercept(message) }}
+                                        messageWindowState={messageWindowState}
+                                        handleSelectMessage={() => { handleSelectMessage(message.id) }}
+                                        selected={selectedMessagesId.has(message.id)}
+                                    />
+                                </div>
                             ))}
                             <div ref={messagesBottomRef}></div>
                             <Observer onIntercept={async () => {
@@ -435,7 +476,7 @@ const ChatsPage: FC = () => {
                         className="message-textarea"
                         placeholder="Введите текст..."
                         value={messageText}
-                        onChange={(event) => { setMessageText(event.target.value); }}
+                        onChange={(event) => { setMessageText(event.target.value) }}
                     />
                     <img
                         className="message-active-image"

@@ -100,3 +100,8 @@ export interface ViewedMessageWSEvent {
     }
     messageCreatedAt: string
 }
+
+export enum MessageWindowState {
+    SELECTABLE,
+    NORMAL,
+}

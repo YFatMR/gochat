@@ -187,6 +187,11 @@
   overflow: hidden;
 }
 
+.message-outer-container {
+  display: flex;
+  justify-content: space-between;
+}
+
 .chat-message-info-container {
   height: 54px;
   display: flex;
@@ -195,19 +200,37 @@
   align-items: flex-end;
 }
 
-.other-message-content-container {
-  align-self: flex-start;
-  margin-left: 200px;
+.message-wrapper {
+  display: flex;
+  align-items: center;
+}
+.message-wrapper_self {
+  align-self: flex-end;
+}
+.message-wrapper_self.selectable {
+  align-self: unset !important;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.message-container {
   display: flex;
   align-items: end;
   max-width: fit-content;
   box-sizing: border-box;
   margin: 4px 24px;
+}
+.message-container_self {
+  background-color: #E0E8FF;
+  border-radius: 12px 12px 0px 12px;
+}
+.message-container_other {
+  align-self: flex-start;
   background-color: #FFFFFF;
   border-radius: 12px 12px 12px 0px;
 }
 
-.other-message-text {
+.message-text {
   color: #18181B;
   font-size: 16px;
   max-width: 500px;
@@ -215,12 +238,22 @@
   word-break: break-all;
 }
 
-.other-message-time {
-  color: #A1A1AA;
+.message-time {
   font-size: 12px;
   margin-left: auto;
-  margin-right: 8px;
   margin-bottom: 4px;
+}
+.message-time_other {
+  color: #A1A1AA;
+  margin-right: 8px;
+}
+.message-time_self {
+  color: #A5B4FC;
+  margin-right: 2px;
+}
+.message-time_self-not-viewed {
+  color: #A5B4FC;
+  margin-right: 8px;
 }
 
 .other-message-viewed {
@@ -231,39 +264,9 @@
   margin-bottom: 4px;
 }
 
-.self-message-content-container {
-  align-self: flex-end;
-  display: flex;
-  align-items: end;
-  max-width: fit-content;
-  box-sizing: border-box;
-  margin: 4px 24px;
-  background-color: #E0E8FF;
-  border-radius: 12px 12px 0px 12px;
-}
-
-.self-message-text {
-  color: black;
-  font-size: 16px;
-  max-width: 500px;
-  margin: 10px;
-  word-break: break-all;
-}
-
-.self-message-time {
-  color: #A5B4FC;
-  font-size: 12px;
-  margin-left: auto;
-  margin-right: 2px;
-  margin-bottom: 4px;
-}
-
-.self-message-time_not_viewed {
-  color: #A5B4FC;
-  font-size: 12px;
-  margin-left: auto;
-  margin-right: 8px;
-  margin-bottom: 4px;
+.select-message-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .current-message-container {
