@@ -7,16 +7,18 @@ export interface ChatProps {
     key: string,
     id: number,
     name: string,
-    messageID: number;
-    messageText: string;
-    messageTimestamp: string,
+    lastMessage: {
+        id: number
+        text: string
+        createdAt: string
+    }
     unreadMessagesCount: number,
     onClick: OnClickType,
     isActive: boolean,
 }
 
 
-export const Chat: FC<ChatProps> = ({ id, name, messageText, messageTimestamp, unreadMessagesCount, onClick, isActive }) => {
+export const Chat: FC<ChatProps> = ({ id, name, lastMessage, unreadMessagesCount, onClick, isActive }) => {
     const onChatClick = () => {
         onClick();
     }
@@ -26,11 +28,12 @@ export const Chat: FC<ChatProps> = ({ id, name, messageText, messageTimestamp, u
             <span id={id.toString()}></span>
             <div className="container">
                 <div className="title">{name}</div>
-                <div className="text">{messageText}</div>
+                <div className="text">{lastMessage.text}</div>
             </div>
             <div className="chat-message-info-container">
-                <span className="time">{messageTimestamp}</span>
-                <span className="unread-messages-count">{unreadMessagesCount}</span>
+                <span className="time">{lastMessage.createdAt}</span>
+                {unreadMessagesCount > 0 ? <span className="unread-messages-count">{unreadMessagesCount}</span> : <></>}
+
             </div>
 
         </button>

@@ -16,18 +16,19 @@ export class ChatService {
     }
 
     static async getMessagesBefore(chatID: number, beforeMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
-        // + 1 to include before messages
         return $api.get(`/v1/dialogs/${chatID}/messages/${beforeMessageID}?limit=${limit}&offset_type=before`)
     }
 
-    static async getMessagesBeforeIncl(chatID: number, beforeMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
-        // + 1 to include before messages
-        return ChatService.getMessagesBefore(chatID, beforeMessageID + 1, limit)
+    static async getMessagesBeforeAndInclude(chatID: number, beforeMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
+        return $api.get(`/v1/dialogs/${chatID}/messages/${beforeMessageID}?limit=${limit}&offset_type=before_include`)
     }
-
 
     static async getMessagesAfter(chatID: number, afterMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
         return $api.get(`/v1/dialogs/${chatID}/messages/${afterMessageID}?limit=${limit}&offset_type=after`)
+    }
+
+    static async getMessagesAfterAndInclude(chatID: number, afterMessageID: number, limit: number): Promise<AxiosResponse<MessagesResponse>> {
+        return $api.get(`/v1/dialogs/${chatID}/messages/${afterMessageID}?limit=${limit}&offset_type=after_include`)
     }
 
     static async sendMessage(chatID: number, text: string): Promise<AxiosResponse<CreateMessageResponse>> {

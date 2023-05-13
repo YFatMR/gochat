@@ -4,7 +4,7 @@ import { Chat } from "../components/chat/Chat";
 import { Message, MessageProps } from "../components/chat/Message";
 import ContextMenu from "../components/chat/ContextMenu";
 import { ChatService } from "../services/ChatService";
-import { ChatsResponse, MessagesResponse, ChatInfo, Dialog, MessageInfo, MessageResponse, NewMessageEvent } from "../types/Chats"
+import { ChatsResponse, MessagesResponse, ChatInfo, Dialog, MessageInfo, MessageResponse, NewMessageWSEvent, ViewedMessageWSEvent } from "../types/Chats"
 import "../styles/css/Chats.css";
 import Observer from "../components/common/Observer";
 import sendMessageActive from "../assets/sendMessageActive.png";
@@ -14,12 +14,23 @@ import autosize from 'autosize';
 
 const chatInfoFromResponse = (dialog: Dialog): ChatInfo => {
     return {
-        id: parseInt(dialog.dialogID.ID) || 0,
-        messageID: parseInt(dialog.lastMessage.messageID.ID) || 0,
+        id: parseInt(dialog.dialogID.ID),
         name: dialog.name,
-        messageText: dialog.lastMessage.text,
-        messageTimestamp: new Date(dialog.lastMessage.createdAt),
-        unreadMessagesCount: parseInt(dialog.unreadMessagesCount) || 0,
+        unreadMessagesCount: parseInt(dialog.unreadMessagesCount),
+        lastMessage: {
+            id: parseInt(dialog.lastMessage.messageID.ID),
+            text: dialog.lastMessage.text,
+            createdAt: new Date(dialog.lastMessage.createdAt),
+            selfMessage: dialog.lastMessage.selfMessage,
+            viewed: dialog.lastMessage.viewed,
+        },
+        lastReadMessage: {
+            id: parseInt(dialog.lastReadMessage.messageID.ID),
+            text: dialog.lastReadMessage.text,
+            createdAt: new Date(dialog.lastReadMessage.createdAt),
+            selfMessage: dialog.lastReadMessage.selfMessage,
+            viewed: dialog.lastReadMessage.viewed,
+        },
     }
 }
 
@@ -37,6 +48,7 @@ const messageInfoFromResponse = (message: MessageResponse): MessageInfo => {
         text: message.text,
         createdAt: new Date(message.createdAt),
         selfMessage: message.selfMessage,
+        viewed: message.viewed,
         lastMessageObserver: null,
     }
 }
@@ -62,7 +74,11 @@ const ChatsPage: FC = () => {
     const messageTextarea = useRef<HTMLTextAreaElement>(null);
     const [prevScrollHeight, setPrevScrollHeight] = useState(0);
 
+    const [fetchingDialogs, setFetchingDialogs] = useState<boolean>(false);
+
     const [lastReadMessage, setLastReadMessage] = useState<MessageInfo | null>(null);
+
+    const [firstMessagesLoad, setFirstMessagesLoad] = useState<boolean>(false);
 
     const [activeDialog, setActiveDialog] = useState<ChatInfo | null>(null);
     const messagesBottomRef = useRef<HTMLDivElement>(null);
@@ -107,44 +123,73 @@ const ChatsPage: FC = () => {
         onClose: () => console.log('WebSocket closed'),
         onError: (event) => console.error('WebSocket error:', event),
         onMessage: async (data: any) => {
-            const newMessageEvent = JSON.parse(data.data) as NewMessageEvent
-            console.log(newMessageEvent)
+            const parsedData = JSON.parse(data.data)
+            console.log("Websocket event", parsedData)
+            if (parsedData.type === "new_message") {
+                const newMessageEvent = parsedData as NewMessageWSEvent
 
-            // update dialog list order
-            var newChats = [...chats]
-            const existChatIdx = newChats.findIndex(chat => chat.id == newMessageEvent.dialogID.ID)
-            if (existChatIdx === -1) {
-                // load dialog
-                const newDialog = await ChatService.getDialogByID(newMessageEvent.dialogID.ID)
-                newChats = [chatInfoFromResponse(newDialog.data), ...newChats]
+                // update dialog list order
+                var newChats = [...chats]
+                const existChatIdx = newChats.findIndex(chat => chat.id == newMessageEvent.dialogID.ID)
+                if (existChatIdx === -1) {
+                    // load dialog
+                    const newDialog = await ChatService.getDialogByID(newMessageEvent.dialogID.ID)
+                    newChats = [chatInfoFromResponse(newDialog.data), ...newChats]
+                } else {
+                    // set new params
+                    newChats[existChatIdx].lastMessage = {
+                        id: newMessageEvent.messageID.ID,
+                        text: newMessageEvent.text,
+                        createdAt: new Date(newMessageEvent.createdAt),
+                        selfMessage: false, // only other members messages
+                        viewed: false,
+                    }
+                }
+                newChats.sort((a: ChatInfo, b: ChatInfo) => {
+                    return b.lastMessage.createdAt.getTime() - a.lastMessage.createdAt.getTime()
+                });
+                setChats(newChats)
+
+                const messageToCurrentDialog = activeDialog !== null && activeDialog.id == newMessageEvent.dialogID.ID
+                if (!messageToCurrentDialog) {
+                    // ignore if not current dialog message
+                    return
+                }
+                const message = {
+                    id: newMessageEvent.messageID.ID,
+                    text: newMessageEvent.text,
+                    createdAt: new Date(newMessageEvent.createdAt),
+                    selfMessage: false,
+                    viewed: false, // someone else's message that the user has not yet seen
+                    lastMessageObserver: null,
+                }
+                if (messagesContainerRef.current) {
+                    setPrevScrollHeight(messagesContainerRef.current.scrollHeight);
+                }
+                setMessages([...messages, message])
+                console.log('WebSocket data', data)
+            } else if (parsedData.type === "viewed") {
+                const viewedMessageEvent = parsedData as ViewedMessageWSEvent
+                const activeDialogAction = activeDialog !== null && activeDialog.id == viewedMessageEvent.dialogID.ID
+                if (!activeDialogAction || !messagesContainerRef.current) {
+                    // ignore if not current dialog event
+                    return
+                }
+                const newMessages = [...messages].map((message) => {
+                    if (message.viewed && message.selfMessage) {
+                        return message
+                    }
+                    message.viewed = message.createdAt <= new Date(viewedMessageEvent.messageCreatedAt)
+                    return message
+                })
+                setPrevScrollHeight(messagesContainerRef.current.scrollTop);
+                setMessages([...newMessages])
+                return
             } else {
-                // set new params
-                newChats[existChatIdx].messageText = newMessageEvent.text
-                newChats[existChatIdx].messageTimestamp = new Date(newMessageEvent.createdAt)
-                newChats[existChatIdx].unreadMessagesCount += 1
-            }
-            newChats.sort((a: ChatInfo, b: ChatInfo) => {
-                return b.messageTimestamp.getTime() - a.messageTimestamp.getTime()
-            });
-            setChats(newChats)
-
-            const messageToCurrentDialog = activeDialog !== null && activeDialog.id == newMessageEvent.dialogID.ID
-            if (!messageToCurrentDialog) {
-                // ignore if not current dialog message
+                console.error("Websocket unknown event with type", parsedData)
                 return
             }
-            const message = {
-                id: newMessageEvent.messageID.ID,
-                text: newMessageEvent.text,
-                createdAt: new Date(newMessageEvent.createdAt),
-                selfMessage: false,
-                lastMessageObserver: null,
-            }
-            if (messagesContainerRef.current) {
-                setPrevScrollHeight(messagesContainerRef.current.scrollHeight);
-            }
-            setMessages([...messages, message])
-            console.log('WebSocket data', data)
+
         },
         shouldReconnect: (closeEvent) => true,
         reconnectAttempts: 10,
@@ -155,26 +200,15 @@ const ChatsPage: FC = () => {
     const chatsCountPerRequest = 30
 
     useEffect(() => {
-        if (messages.length < dialogMessagesPerRequest) {
-            // first load
-            messagesBottomRef.current?.scrollIntoView();
-        };
-
         if (!messagesContainerRef.current) {
             return
         }
-        if (prevScrollHeight !== 0) {
-            const delta = messagesContainerRef.current.scrollHeight - prevScrollHeight;
-            messagesContainerRef.current.scrollTop += delta;
-            setPrevScrollHeight(messagesContainerRef.current.scrollHeight);
-        } else {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
+        messagesContainerRef.current.scrollTop = prevScrollHeight
     }, [messages])
 
 
-    const handleDialogClick = async (chat: ChatInfo, topMessageID: number): Promise<void> => {
-        const newMessagesResponse = await ChatService.getMessagesBeforeIncl(chat.id, topMessageID, dialogMessagesPerRequest);
+    const handleDialogClick = async (chat: ChatInfo): Promise<void> => {
+        const newMessagesResponse = await ChatService.getMessagesBeforeAndInclude(chat.id, chat.lastReadMessage.id, dialogMessagesPerRequest);
         console.log("newMessagesResponse", newMessagesResponse)
         if (newMessagesResponse.status != 200) {
             return
@@ -185,13 +219,25 @@ const ChatsPage: FC = () => {
             return
         }
         newMessages[newMessages.length - 1].lastMessageObserver = lastViewedMessageRef
-        setMessages(newMessages)
         setLastReadMessage(newMessages[newMessages.length - 1])
-        if (messages.length < dialogMessagesPerRequest) {
-            // first load
-            messagesBottomRef.current?.scrollIntoView();
-        };
+
+
+        setMessages(newMessages)
+        setFirstMessagesLoad(true)
+
+        console.log("SCROLLING!!!", messagesBottomRef.current, firstMessagesLoad)
+        console.log("ACTIVE DIALOG last read message", chat.lastReadMessage.text)
     }
+
+
+    useEffect(() => {
+        console.log("EFFECT", messagesBottomRef.current, firstMessagesLoad)
+        if (!messagesBottomRef.current || !firstMessagesLoad) {
+            return
+        }
+        messagesBottomRef.current.scrollIntoView();
+        setFirstMessagesLoad(false)
+    }, [firstMessagesLoad])
 
     const fetchBottomChats = async () => {
         const response = await ChatService.getDialogs(chatsCountPerRequest, chats.length);
@@ -217,14 +263,16 @@ const ChatsPage: FC = () => {
             navigate("")
             return []
         }
-        const newMessages = messagesInfoFromResponse(response.data)
-        if (newMessages.length === 0) {
+        return messagesInfoFromResponse(response.data)
+    }
+
+    const fetchBottomDialogMessages = async (chatID: number, bottomMessageID: number): Promise<MessageInfo[]> => {
+        const response = await ChatService.getMessagesAfter(chatID, bottomMessageID, dialogMessagesPerRequest);
+        if (response.status != 200) {
+            navigate("")
             return []
         }
-        if (messagesContainerRef.current) {
-            setPrevScrollHeight(messagesContainerRef.current.scrollHeight)
-        }
-        return newMessages
+        return messagesInfoFromResponse(response.data)
     }
 
     const sendMessage = async (chatID: number, text: string) => {
@@ -245,6 +293,7 @@ const ChatsPage: FC = () => {
             text: text,
             createdAt: response.data.createdAt,
             selfMessage: true,
+            viewed: false,
         })
         setMessages([...messages, newMessage]);
 
@@ -252,12 +301,16 @@ const ChatsPage: FC = () => {
             if (chat.id !== activeDialog?.id) {
                 return chat
             }
-            chat.messageID = newMessage.id
-            chat.messageText = newMessage.text
-            chat.messageTimestamp = newMessage.createdAt
+            chat.lastMessage = {
+                id: newMessage.id,
+                text: newMessage.text,
+                createdAt: newMessage.createdAt,
+                selfMessage: newMessage.selfMessage,
+                viewed: newMessage.viewed,
+            }
             return chat
         }).sort((a: ChatInfo, b: ChatInfo) => {
-            return b.messageTimestamp.getTime() - a.messageTimestamp.getTime()
+            return b.lastMessage.createdAt.getTime() - a.lastMessage.createdAt.getTime()
         });
         setChats(newChats)
     }
@@ -282,19 +335,31 @@ const ChatsPage: FC = () => {
     }, []);
 
     const onMessageIntercept = async (message: MessageInfo) => {
-        if (!activeDialog || !lastReadMessage) {
+        if (!messagesContainerRef.current || !activeDialog || !lastReadMessage || message.selfMessage || message.viewed) {
             return
         }
         if (message.createdAt < lastReadMessage.createdAt) {
             return
         }
+        // чужое сообщение которое еще не просмотрено
         const response = await ChatService.readAllMessagesBeforeIncl(activeDialog.id, message.id)
         if (response.status !== 200) {
             return
         }
+        console.log("intercepted with", message.id)
         if (message.createdAt > lastReadMessage.createdAt) {
             setLastReadMessage(message)
         }
+        const newMessages = [...messages].map((message) => {
+            if (message.viewed || message.selfMessage) {
+                return message
+            }
+            // чужое сообщение просматриваем
+            message.viewed = message.createdAt <= lastReadMessage.createdAt
+            return message
+        })
+        setPrevScrollHeight(messagesContainerRef.current.scrollTop);
+        setMessages([...newMessages])
     }
 
     return (
@@ -304,12 +369,14 @@ const ChatsPage: FC = () => {
                     <Chat
                         key={chat.id.toString()}
                         id={chat.id}
-                        messageID={chat.messageID}
                         name={chat.name}
-                        messageText={chat.messageText}
-                        unreadMessagesCount={chat.unreadMessagesCount}
-                        messageTimestamp={`${chat.messageTimestamp.getHours()}:${chat.messageTimestamp.getMinutes().toString().padStart(2, '0')}`}
-                        onClick={() => { return handleDialogClick(chat, chat.messageID) }}
+                        unreadMessagesCount={chat.unreadMessagesCount || 0}
+                        lastMessage={{
+                            id: chat.lastMessage.id,
+                            text: chat.lastMessage.text,
+                            createdAt: `${chat.lastMessage.createdAt.getHours()}:${chat.lastMessage.createdAt.getMinutes().toString().padStart(2, '0')}`,
+                        }}
+                        onClick={() => { return handleDialogClick(chat) }}
                         isActive={activeDialog?.id === chat.id}
                     />
                 ))}
@@ -323,11 +390,16 @@ const ChatsPage: FC = () => {
                     {messages.length ?
                         <>
                             <Observer onIntercept={async () => {
-                                if (!activeDialog) {
+                                if (!activeDialog || fetchingDialogs) {
                                     return
                                 }
+                                setFetchingDialogs(true)
                                 const newMessages = await fetchTopDialogMessages(activeDialog.id, messages[0].id)
+
+                                setPrevScrollHeight(messagesContainerRef.current?.scrollTop || 0)
                                 setMessages([...newMessages, ...messages]);
+
+                                setFetchingDialogs(false)
                             }} />
                             {messages.map((message) => (
                                 <Message
@@ -337,13 +409,23 @@ const ChatsPage: FC = () => {
                                     selfMessage={message.selfMessage}
                                     id={message.id}
                                     lastMessageObserver={message.lastMessageObserver}
-                                    isRead={false}
+                                    viewed={message.viewed}
                                     onIntercept={() => { onMessageIntercept(message) }}
                                 />
                             ))}
                             <div ref={messagesBottomRef}></div>
-                            <Observer onIntercept={() => {
+                            <Observer onIntercept={async () => {
+                                if (!activeDialog || messages.length === 0 || fetchingDialogs || messages[messages.length - 1].id === activeDialog.lastMessage.id) {
+                                    return
+                                }
+                                setFetchingDialogs(true)
+                                const newMessages = await fetchBottomDialogMessages(activeDialog.id, messages[messages.length - 1].id)
                                 console.log('on intersect bottom messages');
+
+                                setPrevScrollHeight(messagesContainerRef.current?.scrollTop || 0)
+                                setMessages([...messages, ...newMessages]);
+
+                                setFetchingDialogs(false)
                             }} />
                         </> : <div> There is no messages... </div>}
                 </div>
