@@ -15,11 +15,15 @@ import {
 } from "../types/Chats"
 import "../styles/css/Chats.css";
 import Observer from "../components/common/Observer";
-import sendMessageActive from "../assets/sendMessageActive.png";
 import { API_HOST } from "../http/index"
 import useWebSocket from 'react-use-websocket';
 import autosize from 'autosize';
 import classnames from 'classnames';
+
+// Images
+import sendMessageActive from "../assets/sendMessageActive.png";
+import closeIcon from "../assets/close.png";
+import showInstructionIcon from "../assets/showInstruction.png";
 
 const chatInfoFromResponse = (dialog: Dialog): ChatInfo => {
     return {
@@ -32,6 +36,7 @@ const chatInfoFromResponse = (dialog: Dialog): ChatInfo => {
             createdAt: new Date(dialog.lastMessage.createdAt),
             selfMessage: dialog.lastMessage.selfMessage,
             viewed: dialog.lastMessage.viewed,
+            type: dialog.lastMessage.type,
         },
         lastReadMessage: {
             id: parseInt(dialog.lastReadMessage.messageID.ID),
@@ -39,6 +44,7 @@ const chatInfoFromResponse = (dialog: Dialog): ChatInfo => {
             createdAt: new Date(dialog.lastReadMessage.createdAt),
             selfMessage: dialog.lastReadMessage.selfMessage,
             viewed: dialog.lastReadMessage.viewed,
+            type: dialog.lastReadMessage.type,
         },
     }
 }
@@ -59,6 +65,7 @@ const messageInfoFromResponse = (message: MessageResponse): MessageInfo => {
         selfMessage: message.selfMessage,
         viewed: message.viewed,
         lastMessageObserver: null,
+        type: message.type,
     }
 }
 
@@ -77,6 +84,10 @@ const ChatsPage: FC = () => {
     const [messages, setMessages] = useState<MessageInfo[]>([]);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messageTextarea = useRef<HTMLTextAreaElement>(null);
+
+    const instructionNameTextarea = useRef<HTMLTextAreaElement>(null);
+    const [instructionNameText, setInstructionNameText] = useState<string>('');
+
     const [prevScrollHeight, setPrevScrollHeight] = useState(0);
 
     const [fetchingDialogs, setFetchingDialogs] = useState<boolean>(false);
@@ -92,21 +103,21 @@ const ChatsPage: FC = () => {
     const [messageWindowState, setMessageWindowState] = useState<MessageWindowState>(MessageWindowState.NORMAL);
     const [showMenu, setShowMenu] = useState<Boolean>(false);
     const [menuPosition, setMenuPosition] = useState<Record<string, number>>({ x: 0, y: 0 });
-    const [selectedMessagesId, setSelectedMessagesId] = useState<Set<number>>(new Set());
 
-    const handleSelectMessage = (id: number) => {
-        const newSelectedMessagesId = new Set(selectedMessagesId);
+    const [selectedMessages, setSelectedMessages] = useState<Map<number, MessageInfo>>(new Map());
 
-        if (newSelectedMessagesId.has(id)) {
-            newSelectedMessagesId.delete(id)
+    const handleSelectMessage = (message: MessageInfo) => {
+        const newSelectedMessages = new Map(selectedMessages);
+
+        if (newSelectedMessages.has(message.id)) {
+            newSelectedMessages.delete(message.id)
         } else {
-            newSelectedMessagesId.add(id)
+            newSelectedMessages.set(message.id, message)
         }
-
-        setSelectedMessagesId(newSelectedMessagesId)
+        setSelectedMessages(newSelectedMessages)
     }
 
-    const handleContextMenu = (event: MouseEvent<HTMLDivElement>, messageId: number) => {
+    const handleContextMenu = (event: MouseEvent<HTMLDivElement>, message: MessageInfo) => {
         event.preventDefault();
 
         if (showMenu) {
@@ -114,7 +125,7 @@ const ChatsPage: FC = () => {
             return;
         }
 
-        handleSelectMessage(messageId);
+        handleSelectMessage(message);
 
         setMenuPosition({ x: event.clientX, y: event.clientY });
 
@@ -126,10 +137,10 @@ const ChatsPage: FC = () => {
     };
 
     useEffect(() => {
-        if (selectedMessagesId.size === 0) {
+        if (selectedMessages.size === 0) {
             setMessageWindowState(MessageWindowState.NORMAL);
         }
-    }, [selectedMessagesId.size])
+    }, [selectedMessages.size])
 
 
     useEffect(() => {
@@ -161,7 +172,7 @@ const ChatsPage: FC = () => {
         onMessage: async (data: any) => {
             const parsedData = JSON.parse(data.data)
             console.log("Websocket event", parsedData)
-            if (parsedData.type === "new_message") {
+            if (parsedData.wsType === "new_message") {
                 const newMessageEvent = parsedData as NewMessageWSEvent
 
                 // update dialog list order
@@ -179,6 +190,7 @@ const ChatsPage: FC = () => {
                         createdAt: new Date(newMessageEvent.createdAt),
                         selfMessage: false, // only other members messages
                         viewed: false,
+                        type: newMessageEvent.type,
                     }
                 }
                 newChats.sort((a: ChatInfo, b: ChatInfo) => {
@@ -198,13 +210,14 @@ const ChatsPage: FC = () => {
                     selfMessage: false,
                     viewed: false, // someone else's message that the user has not yet seen
                     lastMessageObserver: null,
+                    type: newMessageEvent.type,
                 }
                 if (messagesContainerRef.current) {
                     setPrevScrollHeight(messagesContainerRef.current.scrollHeight);
                 }
                 setMessages([...messages, message])
                 console.log('WebSocket data', data)
-            } else if (parsedData.type === "viewed") {
+            } else if (parsedData.wsType === "viewed") {
                 const viewedMessageEvent = parsedData as ViewedMessageWSEvent
                 const activeDialogAction = activeDialog !== null && activeDialog.id == viewedMessageEvent.dialogID.ID
                 if (!activeDialogAction || !messagesContainerRef.current) {
@@ -311,13 +324,18 @@ const ChatsPage: FC = () => {
         return messagesInfoFromResponse(response.data)
     }
 
-    const sendMessage = async (chatID: number, text: string) => {
+    const createMessage = async (chatID: number, text: string): Promise<boolean> => {
         if (text === "") {
-            return
+            return false
         }
-        const response = await ChatService.sendMessage(chatID, text)
+
+        const newText = text.startsWith("::") ? text.substring(2) : text
+        const messageType = text.startsWith("::") ? "CODE" : "NORMAL"
+        const response = messageType === "CODE" ?
+            await ChatService.createMessageWithCode(chatID, "title", newText) :
+            await ChatService.createMessage(chatID, newText)
         if (response.status !== 200) {
-            return
+            return false
         }
         const newMessage = messageInfoFromResponse({
             messageID: {
@@ -326,10 +344,11 @@ const ChatsPage: FC = () => {
             senderID: {
                 ID: "0",
             },
-            text: text,
+            text: newText,
             createdAt: response.data.createdAt,
             selfMessage: true,
             viewed: false,
+            type: messageType,
         })
         setMessages([...messages, newMessage]);
 
@@ -343,12 +362,14 @@ const ChatsPage: FC = () => {
                 createdAt: newMessage.createdAt,
                 selfMessage: newMessage.selfMessage,
                 viewed: newMessage.viewed,
+                type: newMessage.type,
             }
             return chat
         }).sort((a: ChatInfo, b: ChatInfo) => {
             return b.lastMessage.createdAt.getTime() - a.lastMessage.createdAt.getTime()
         });
         setChats(newChats)
+        return true
     }
 
     // init list of dialogs
@@ -398,6 +419,30 @@ const ChatsPage: FC = () => {
         setMessages([...newMessages])
     }
 
+    const onCreateInstruction = async () => {
+        const copySelectedMessages = new Map(selectedMessages)
+        const title = instructionNameText
+        if (title.length <= 0) {
+            alert("Заголовок инструкции не должен быть пустым")
+            return
+        }
+        setSelectedMessages(new Map())
+        if (copySelectedMessages.size <= 0 || !activeDialog) {
+            return
+        }
+        const instructionText = Array.from(copySelectedMessages.values()).sort((a: MessageInfo, b: MessageInfo) => {
+            return a.createdAt.getTime() - b.createdAt.getTime()
+        }).map((value: MessageInfo, idx: number) => {
+            return (idx + 1).toString() + ". " + value.text
+        }).join('\n\n')
+
+        const response = await ChatService.createInstruction(activeDialog.id, title, instructionText)
+        if (response.status !== 200) {
+            console.error("Can not create instruction", response)
+            return
+        }
+    }
+
     return (
         <div className="main-container">
             <div className="chats-container">
@@ -438,9 +483,8 @@ const ChatsPage: FC = () => {
                                 setFetchingDialogs(false)
                             }} />
                             {messages.map((message) => (
-                                <div className={classnames({ "message-outer-container": message.selfMessage })} key={message.id.toString()} onContextMenu={(e) => { handleContextMenu(e, message.id) }}>
+                                <div className={classnames({ "message-outer-container": message.selfMessage, "message-outer-container_selected": selectedMessages.has(message.id) })} key={message.id.toString()} onContextMenu={(e) => { handleContextMenu(e, message) }}>
                                     <Message
-
                                         text={message.text}
                                         createdAt={`${message.createdAt.getHours()}:${message.createdAt.getMinutes().toString().padStart(2, '0')}`}
                                         selfMessage={message.selfMessage}
@@ -449,8 +493,9 @@ const ChatsPage: FC = () => {
                                         viewed={message.viewed}
                                         onIntercept={() => { onMessageIntercept(message) }}
                                         messageWindowState={messageWindowState}
-                                        handleSelectMessage={() => { handleSelectMessage(message.id) }}
-                                        selected={selectedMessagesId.has(message.id)}
+                                        handleSelectMessage={() => { handleSelectMessage(message) }}
+                                        selected={selectedMessages.has(message.id)}
+                                        type={message.type}
                                     />
                                 </div>
                             ))}
@@ -471,25 +516,59 @@ const ChatsPage: FC = () => {
                         </> : <div> There is no messages... </div>}
                 </div>
                 <div className="current-message-container">
-                    <textarea
-                        ref={messageTextarea}
-                        className="message-textarea"
-                        placeholder="Введите текст..."
-                        value={messageText}
-                        onChange={(event) => { setMessageText(event.target.value) }}
-                    />
-                    <img
-                        className="message-active-image"
-                        src={sendMessageActive}
-                        onClick={() => {
-                            if (!activeDialog) {
-                                return
-                            }
-                            console.log("activeDialogID", activeDialog.id)
-                            sendMessage(activeDialog.id, messageText);
-                            setMessageText("")
-                        }}
-                    />
+                    {messageWindowState === MessageWindowState.NORMAL ?
+                        <>
+                            <textarea
+                                ref={messageTextarea}
+                                className="message-textarea"
+                                placeholder="Введите текст..."
+                                value={messageText}
+                                onChange={(event) => { setMessageText(event.target.value) }}
+                            />
+                            <img
+                                className="message-active-image"
+                                src={sendMessageActive}
+                                onClick={async () => {
+                                    if (!activeDialog) {
+                                        return
+                                    }
+                                    console.log("activeDialogID", activeDialog.id)
+                                    const created = await createMessage(activeDialog.id, messageText);
+                                    if (created) {
+                                        setMessageText("")
+                                    }
+                                }}
+                            />
+                        </>
+                        :
+                        <div className={classnames("submit-instruction-container")}>
+                            <div className="submit-instruction-inner-top-container">
+                                <div className="submit-instruction-messages-count-container" onClick={() => setSelectedMessages(new Map())}>
+                                    <div className="close-icon-container">
+                                        <img className="close-icon" src={closeIcon} />
+                                    </div>
+                                    <span className="submit-instruction-messages-text">{selectedMessages.size} message{selectedMessages.size > 1 ? "s" : ""} selected</span>
+                                </div>
+                                {/* <div className="show-instruction-icon-container ">
+                                    <img className="show-instruction-icon" src={showInstructionIcon} />
+                                </div> */}
+                            </div >
+                            <div className="submit-instruction-inner-bottom-container">
+                                <textarea
+                                    ref={instructionNameTextarea}
+                                    value={instructionNameText}
+                                    className="submit-instruction-name-textarea"
+                                    placeholder="Введите имя инстркуции..."
+                                    onChange={(event) => { setInstructionNameText(event.target.value) }}
+                                />
+                                <button
+                                    className="submit-instruction-button"
+                                    onClick={() => { onCreateInstruction() }}
+                                >Ok</button>
+                            </div>
+                        </div>
+                    }
+
                 </div>
             </div>
         </div>

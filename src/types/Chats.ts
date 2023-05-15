@@ -17,6 +17,7 @@ export interface MessageResponse {
     createdAt: string
     selfMessage: boolean
     viewed: boolean
+    type: string
 }
 
 export interface Dialog {
@@ -50,6 +51,7 @@ export interface ChatInfo {
         createdAt: Date
         selfMessage: boolean
         viewed: boolean
+        type: string
     }
     lastReadMessage: {
         id: number
@@ -57,6 +59,7 @@ export interface ChatInfo {
         createdAt: Date
         selfMessage: boolean
         viewed: boolean
+        type: string
     }
 }
 
@@ -67,9 +70,11 @@ export interface MessageInfo {
     selfMessage: boolean
     viewed: boolean
     lastMessageObserver: any
+    type: string
 };
 
 export interface NewMessageWSEvent {
+    wsType: string
     type: string
     messageID: {
         ID: number,
@@ -88,7 +93,7 @@ export interface NewMessageWSEvent {
 }
 
 export interface ViewedMessageWSEvent {
-    type: string
+    wsType: string
     messageID: {
         ID: number,
     }

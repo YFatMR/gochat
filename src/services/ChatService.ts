@@ -31,8 +31,22 @@ export class ChatService {
         return $api.get(`/v1/dialogs/${chatID}/messages/${afterMessageID}?limit=${limit}&offset_type=after_include`)
     }
 
-    static async sendMessage(chatID: number, text: string): Promise<AxiosResponse<CreateMessageResponse>> {
+    static async createInstruction(chatID: number, title: string, text: string): Promise<AxiosResponse<void>> {
+        return $api.post(`/v1/dialogs/${chatID}/instructions`, {
+            title,
+            text,
+        })
+    }
+
+    static async createMessage(chatID: number, text: string): Promise<AxiosResponse<CreateMessageResponse>> {
         return $api.post(`/v1/dialogs/${chatID}/messages`, {
+            text,
+        })
+    }
+
+    static async createMessageWithCode(chatID: number, title: string, text: string): Promise<AxiosResponse<CreateMessageResponse>> {
+        return $api.post(`/v1/dialogs/${chatID}/messages`, {
+            title,
             text,
         })
     }

@@ -7,6 +7,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LoginPage from "./pages/Login"
 import RegistrationPage from "./pages/Registration"
 import ChatsPage from "./pages/Chats"
+import SandboxPage from "./pages/Sandbox"
 
 const store = new Store()
 
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
   {
     path: "/x/",
     element: <ChatsPage />,
+  },
+  {
+    path: "/s/",
+    element: <SandboxPage />,
   },
 ]);
 
