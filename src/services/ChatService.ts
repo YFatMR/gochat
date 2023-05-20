@@ -1,6 +1,6 @@
 import $api from "../http";
 import { AxiosResponse } from "axios";
-import { ChatsResponse, MessagesResponse, CreateMessageResponse, Dialog } from "../types/Chats";
+import { ChatsResponse, MessagesResponse, CreateMessageResponse, Dialog, LinksResponse } from "../types/Chats";
 
 export class ChatService {
     static async getDialogs(limit: number, offset: number): Promise<AxiosResponse<ChatsResponse>> {
@@ -49,5 +49,13 @@ export class ChatService {
             title,
             text,
         })
+    }
+
+    static async getLinks(chatID: number, limit: number): Promise<AxiosResponse<LinksResponse>> {
+        return $api.get(`/v1/dialogs/${chatID}/links?limit=${limit}`)
+    }
+
+    static async getLinksAfter(chatID: number, linkID: number, limit: number): Promise<AxiosResponse<LinksResponse>> {
+        return $api.get(`/v1/dialogs/${chatID}/links?limit=${limit}&linkID=${linkID}&offset_type=after`)
     }
 }

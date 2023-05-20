@@ -1,5 +1,6 @@
 import React, { FC } from "react";
 import "../../styles/css/Chats.css";
+import { MediumAvatar } from "./Avatar";
 
 export type OnClickType = () => Promise<void>
 
@@ -22,10 +23,13 @@ export const Chat: FC<ChatProps> = ({ id, name, lastMessage, unreadMessagesCount
     const onChatClick = () => {
         onClick();
     }
+    const splitedStr = name.split(' ')
+    const smallTitle = splitedStr.length > 1 ? splitedStr[0][0] + splitedStr[1][0] : splitedStr[0][0];
     return (
         <button className={isActive ? 'chat_active chat' : 'chat'} onClick={onChatClick} name={id.toString()}>
             {/* <img src="path/to/image.png" alt="Изображение"></img> */}
             <span id={id.toString()}></span>
+            <MediumAvatar smallTitle={smallTitle} fullName={name} />
             <div className="container">
                 <div className="title">{name}</div>
                 <div className="text">{lastMessage.text}</div>

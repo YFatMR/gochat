@@ -10,13 +10,15 @@
     /* высота экрана */
 }
 
-.chats-container {
+.left-container {
     width: fit-content;
+    min-width: fit-content;
     box-sizing: border-box;
     height: 100vh;
     overflow: auto;
     overflow-y: scroll;
     overflow-x: hidden;
+    flex: 0 0 fit-content;
 
     &::-webkit-scrollbar {
         width: 8px;
@@ -36,6 +38,30 @@
         border: 0px;
         /* padding вокруг плашки */
     }
+}
+
+.central-container {
+    width: auto;
+    box-sizing: border-box;
+    height: 100vh;
+    max-height: 100vh;
+    background-color: #F7F7F7;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+
+    flex: 1;
+}
+
+.right-container {
+    display: flex;
+    flex-direction: column;
+    width: 312px;
+    height: 100vh;
+    flex: 0;
+    flex: 0 0 312px;
+    margin: 16px;
+    gap: 24px;
 }
 
 .chat {
@@ -107,6 +133,8 @@
 .container {
     display: flex;
     flex-direction: column;
+    margin-left: 8px;
+    gap: 6px;
 }
 
 .title {
@@ -121,7 +149,7 @@
 
 .text {
     width: 150px;
-    height: 36px;
+    height: 18px;
     line-height: 18px;
     font-size: 14px;
     white-space: nowrap;
@@ -158,20 +186,8 @@
 
 // MESSAGE ======================================================================
 
-
-.right-container {
-    width: auto;
-    box-sizing: border-box;
-    height: 100vh;
-    background-color: #F7F7F7;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-}
-
-
 .messages-container {
-    width: 700px;
+    // width: 700px;
     box-sizing: border-box;
     height: calc(100vh - 100px);
     overflow: auto;
@@ -205,6 +221,36 @@
     }
 }
 
+.settings-item-container {
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+
+    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    max-height: 100%;
+
+    &::-webkit-scrollbar {
+        width: 8px;
+        /* ширина scrollbar */
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #F7F7F7;
+        /* цвет дорожки */
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #dadce0;
+        /* цвет плашки */
+        border-radius: 20px;
+        /* закругления плашки */
+        border: 0px;
+        /* padding вокруг плашки */
+    }
+}
+
 .message-outer-container {
     display: flex;
     justify-content: space-between;
@@ -219,7 +265,8 @@
     height: 54px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 6px;
     align-items: flex-end;
 }
 
@@ -254,7 +301,7 @@
 
     &_self-code {
         // align-self: flex-end;
-        background-color: black;
+        background: rgb(30, 30, 30);
         border-radius: 12px 12px 0px 12px;
     }
 
@@ -266,7 +313,7 @@
 
     &_other-code {
         align-self: flex-start;
-        background-color: black;
+        background: rgb(30, 30, 30);
         border-radius: 12px 12px 12px 0px;
     }
 }
@@ -498,13 +545,50 @@
 
 // CODE =======================================
 
-pre {
-    background-color: black !important;
-    font-size: 16px !important;
-    margin: 8px !important;
-    padding: 0px !important;
-    /* Новый цвет фона */
-}
+// pre {
+//     background-color: black !important;
+//     font-size: 16px !important;
+//     margin: 8px 0px 8px 8px;
+//     padding: 0px !important;
+//     /* Новый цвет фона */
+
+
+//     display: flex;
+//     box-sizing: border-box;
+
+//     max-width: 500px;
+//     max-height: 300px;
+
+
+//     overflow: auto;
+//     overflow-y: scroll;
+//     overflow-x: scroll;
+
+//     &::-webkit-scrollbar {
+//         width: 8px;
+//         /* ширина scrollbar */
+//         height: 8px;
+//         /* высоты scrollbar */
+//     }
+
+//     &::-webkit-scrollbar-track {
+//         background: black;
+//         /* цвет дорожки */
+//     }
+
+//     &::-webkit-scrollbar-corner {
+//         background: rgba(0, 0, 0, 0);
+//     }
+
+//     &::-webkit-scrollbar-thumb {
+//         background: #D9D9E3;
+//         /* цвет плашки */
+//         border-radius: 20px;
+//         /* закругления плашки */
+//         border: 0px;
+//         /* padding вокруг плашки */
+//     }
+// }
 
 .message-code-header {
     display: flex;
@@ -518,5 +602,7 @@ pre {
 }
 
 .message-code {
-    background: black;
+    background: rgb(30, 30, 30);
 }
+
+//

@@ -4,7 +4,10 @@
   "private": true,
   "dependencies": {
     "@assemblyscript/loader": "^0.27.5",
+    "@codemirror/lang-javascript": "^6.1.8",
+    "@codemirror/lang-python": "^6.1.2",
     "@monaco-editor/react": "^4.5.1",
+    "@pyodide/pyodide": "^0.17.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -13,6 +16,8 @@
     "@types/node": "^16.18.23",
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",
+    "@uiw/codemirror-theme-vscode": "^4.19.16",
+    "@uiw/react-codemirror": "^4.19.16",
     "@webassemblyjs/ast": "^1.11.6",
     "@webassemblyjs/wasm-parser": "^1.11.6",
     "autosize": "^6.0.1",
@@ -20,12 +25,18 @@
     "classnames": "^2.3.2",
     "clipboard-copy": "^4.0.1",
     "copy-to-clipboard-typescript": "^1.5.0",
+    "lodash": "^4.17.21",
+    "md5": "^2.3.0",
     "mobx": "^6.9.0",
     "mobx-react-lite": "^3.4.3",
     "monaco-css": "^3.9.0",
+    "pyodide": "^0.23.2",
+    "python-wasm": "^0.28.1",
     "react": "^18.2.0",
+    "react-codemirror-ts": "^0.0.3",
     "react-dom": "^18.2.0",
     "react-intersection-observer": "^9.4.3",
+    "react-resizable-layout": "^0.6.0",
     "react-router-dom": "^6.10.0",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.5.0",
@@ -41,7 +52,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "sass": "sass ./src/styles/Auth.scss:./src/styles/css/Auth.css ./src/styles/Chats.scss:./src/styles/css/Chats.css",
+    "sass": "sass ./src/styles/Auth.scss:./src/styles/css/Auth.css ./src/styles/Chats.scss:./src/styles/css/Chats.css ./src/styles/Sandbox.scss:./src/styles/css/Sandbox.css",
     "scss-watch": "node-sass --watch src/assets/scss -o src/assets/css"
   },
   "eslintConfig": {
@@ -64,7 +75,10 @@
   },
   "devDependencies": {
     "@types/autosize": "^4.0.1",
+    "@types/lodash": "^4.14.194",
+    "@types/md5": "^2.3.2",
     "@types/react-syntax-highlighter": "^15.5.6",
-    "@types/socket.io-client": "^3.0.0"
+    "@types/socket.io-client": "^3.0.0",
+    "worker-loader": "^3.0.8"
   }
 }

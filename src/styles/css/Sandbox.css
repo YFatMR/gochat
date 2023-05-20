@@ -1,0 +1,131 @@
+@charset "UTF-8";
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.top-container {
+  display: flex;
+  flex-grow: 1;
+  place-items: center;
+  transition: filter 0.2s ease-out, background-color 0.2s ease-out;
+  font-size: 16px;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  min-height: 10vh;
+  width: 100%;
+  height: 100%;
+}
+
+.buttons-container {
+  display: flex;
+  flex-grow: 1;
+  place-items: center;
+  transition: filter 0.2s ease-out, background-color 0.2s ease-out;
+  font-size: 16px;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  min-height: 10vh;
+  width: 100%;
+  height: 100%;
+}
+
+.bottom-container {
+  flex-shrink: 0;
+  display: flex;
+  transition: filter 0.2s ease-out, background-color 0.2s ease-out;
+  font-size: 16px;
+  min-height: 10vh;
+  overflow-x: scroll;
+  overflow-y: scroll;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  background: rgb(30, 30, 30);
+}
+.bottom-container::-webkit-scrollbar {
+  width: 8px;
+  /* ширина scrollbar */
+  height: 8px;
+  /* высоты scrollbar */
+}
+.bottom-container::-webkit-scrollbar-track {
+  background: rgb(30, 30, 30);
+  /* цвет дорожки */
+}
+.bottom-container::-webkit-scrollbar-corner {
+  background: rgb(30, 30, 30);
+}
+.bottom-container::-webkit-scrollbar-thumb {
+  background: #D9D9E3;
+  /* цвет плашки */
+  border-radius: 20px;
+  /* закругления плашки */
+  border: 0px;
+  /* padding вокруг плашки */
+}
+
+.horizontal-drag-bar {
+  flex-shrink: 0;
+  height: 8px;
+  width: 100%;
+  background: rgb(160, 160, 160);
+  cursor: row-resize;
+  transition: background-color 0.15s 0.15s ease-in-out;
+}
+.horizontal-drag-bar_dragging {
+  background: rgb(230, 230, 230);
+}
+
+.cm-theme {
+  width: 100%;
+  height: 100%;
+}
+
+.cm-scroller::-webkit-scrollbar {
+  width: 8px;
+  /* ширина scrollbar */
+  height: 8px;
+  /* высоты scrollbar */
+}
+.cm-scroller::-webkit-scrollbar-track {
+  background: rgb(30, 30, 30);
+  /* цвет дорожки */
+}
+.cm-scroller::-webkit-scrollbar-corner {
+  background: rgb(30, 30, 30);
+}
+.cm-scroller::-webkit-scrollbar-thumb {
+  background: #D9D9E3;
+  /* цвет плашки */
+  border-radius: 20px;
+  /* закругления плашки */
+  border: 0px;
+  /* padding вокруг плашки */
+}
+
+.output-style {
+  margin-left: 30px;
+  line-height: 12px;
+}
+
+.run-button {
+  margin-left: 30px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  background-color: #ffc107;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.run-button:hover {
+  background-color: #ff9800;
+  /* Цвет фона при наведении */
+}
+
+/*# sourceMappingURL=Sandbox.css.map */

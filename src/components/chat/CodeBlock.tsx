@@ -2,6 +2,21 @@ import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { coy, atomDark, tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 // import Editor from '@monaco-editor/react';
+// import { Codemirror } from 'react-codemirror-ts';
+// import 'codemirror/lib/codemirror.css';
+// import 'codemirror/mode/javascript/javascript';
+// import 'codemirror/mode/python/python';
+// import 'codemirror/addon/edit/matchbrackets';
+
+import { useNavigate } from "react-router-dom";
+
+import CodeMirror from '@uiw/react-codemirror';
+// Extentions
+import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+// Themes
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+
 
 // Images
 import copyCodeIcon from "../../assets/copyCode.png"
@@ -21,22 +36,31 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
         fontSize: '12px',
     } as React.CSSProperties;
 
-    const [isHovered, setIsHovered] = useState<boolean>(false);
+    const navigate = useNavigate();
 
-    const handleMouseEnter = () => {
-        setIsHovered(true);
+    const [isHoveredCopyCode, setIsHoveredCopyCode] = useState<boolean>(false);
+    const [isHoveredSandboxLink, setIsHoveredSandboxLink] = useState<boolean>(false);
+
+    const handleMouseEnterCopyCode = () => {
+        setIsHoveredCopyCode(true);
+    };
+    const handleMouseLeaveCopyCode = () => {
+        setIsHoveredCopyCode(false);
     };
 
-    const handleMouseLeave = () => {
-        setIsHovered(false);
+    const handleMouseEnterSandboxLink = () => {
+        setIsHoveredSandboxLink(true);
+    };
+    const handleMouseLeaveSandboxLink = () => {
+        setIsHoveredSandboxLink(false);
     };
 
-    const divStyle = {
+    const copyCodeDivStyle = {
         display: 'flex',
         justifyContent: 'center',
         margin: '8px 16px 8px 8px',
         cursor: 'default',
-        ...(isHovered && {
+        ...(isHoveredCopyCode && {
             display: 'flex',
             justifyContent: 'center',
             margin: '8px 16px 8px 8px',
@@ -44,31 +68,48 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
         }),
     } as React.CSSProperties;
 
+    const sandboxLinkSpanStyle = {
+        cursor: 'default',
+        display: 'flex',
+        marginLeft: '16px',
+        ...(isHoveredSandboxLink && {
+            cursor: 'pointer',
+            display: 'flex',
+            marginLeft: '16px',
+        }),
+    } as React.CSSProperties;
+
 
     return (
         <>
             <div className='message-code-header'>
-                <span style={{ marginLeft: '16px' }}>{language}</span>
+                <span
+                    style={sandboxLinkSpanStyle}
+                    onMouseEnter={handleMouseEnterSandboxLink}
+                    onMouseLeave={handleMouseLeaveSandboxLink}
+                    onClick={() => {
+                        navigate(`/s`, { state: { text: code } })
+                    }}
+                >sandbox:{language}</span>
                 <div
                     onClick={() => { navigator.clipboard.writeText(code) }}
-                    style={divStyle}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}>
+                    style={copyCodeDivStyle}
+                    onMouseEnter={handleMouseEnterCopyCode}
+                    onMouseLeave={handleMouseLeaveCopyCode}>
                     <img src={copyCodeIcon} style={{ width: 'auto', height: '16px', marginRight: '8px' }} />
                     <span>Copy code</span>
                 </div>
             </div>
             <div className='message-code'>
-                <SyntaxHighlighter
-                    language={language}
-                    style={tomorrow}
-                    wrapLines={true}
-                    useInlineStyles={true}
-                    lineNumberStyle={lineNumberStyle}
-                    // lineNumberContainerStyle={{}}
-                    showLineNumbers={true}>
-                    {code}
-                </SyntaxHighlighter>
+                <CodeMirror
+                    value={code}
+                    maxWidth={"500px"}
+                    maxHeight={"300px"}
+                    theme={vscodeDark}
+                    // name="example"
+                    extensions={[python(), javascript()]}
+                    editable={false}
+                />
             </div>
         </>
     );

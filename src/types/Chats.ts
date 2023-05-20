@@ -110,3 +110,25 @@ export enum MessageWindowState {
     SELECTABLE,
     NORMAL,
 }
+
+export interface LinkID {
+    ID: string
+}
+
+export interface Link {
+    linkID: LinkID
+    link: string
+    messageID: MessageID
+    createdAt: string
+}
+
+export interface LinksResponse {
+    links: Link[]
+}
+
+export interface LinkInfo {
+    id: number
+    link: string
+    messageID: number
+    createdAt: Date
+}

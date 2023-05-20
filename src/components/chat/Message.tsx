@@ -41,7 +41,7 @@ export const Message: FC<MessageProps> = ({ type, viewed, lastMessageObserver, t
 
     const urlRegex = /((https?|ftp):\/\/[^\s/$.?#].[^\s]*)/gi;
     text = text.replace(urlRegex, (url) => {
-        return `<a href="${url}" target="_blank" title="${url}">ССЫЛКА</a>`;
+        return `<a href="${url}" target="_blank" title="${url}">${url}</a>`;
     });
 
     return (
@@ -66,6 +66,5 @@ export const Message: FC<MessageProps> = ({ type, viewed, lastMessageObserver, t
                 </div>
             </div>
         </>
-
     );
 };

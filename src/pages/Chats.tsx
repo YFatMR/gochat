@@ -11,7 +11,10 @@ import {
     MessageInfo, MessageResponse,
     NewMessageWSEvent,
     ViewedMessageWSEvent,
-    MessageWindowState
+    MessageWindowState,
+    LinkInfo,
+    LinksResponse,
+    Link,
 } from "../types/Chats"
 import "../styles/css/Chats.css";
 import Observer from "../components/common/Observer";
@@ -19,11 +22,16 @@ import { API_HOST } from "../http/index"
 import useWebSocket from 'react-use-websocket';
 import autosize from 'autosize';
 import classnames from 'classnames';
-
+import { PersonInfoOption } from "../components/chat/PersonInfoOption"
+import { MenuOption } from "../components/chat/MenuOption"
+import { SettingsItem } from "../components/chat/SettingsItem"
+import { BigAvatar, SmallAvatar } from "../components/chat/Avatar"
 // Images
 import sendMessageActive from "../assets/sendMessageActive.png";
 import closeIcon from "../assets/close.png";
 import showInstructionIcon from "../assets/showInstruction.png";
+import infoIcon from "../assets/info.png";
+
 
 const chatInfoFromResponse = (dialog: Dialog): ChatInfo => {
     return {
@@ -49,10 +57,25 @@ const chatInfoFromResponse = (dialog: Dialog): ChatInfo => {
     }
 }
 
+const linkInfoFromResponse = (link: Link): LinkInfo => {
+    return {
+        id: parseInt(link.linkID.ID),
+        messageID: parseInt(link.messageID.ID),
+        link: link.link,
+        createdAt: new Date(link.createdAt),
+    }
+}
+
 
 const chatsFromResponse = (response: ChatsResponse): ChatInfo[] => {
     return response.dialogs ? response.dialogs.map(dialog => {
         return chatInfoFromResponse(dialog)
+    }) : []
+}
+
+const linksFromResponse = (response: LinksResponse): LinkInfo[] => {
+    return response.links ? response.links.map(link => {
+        return linkInfoFromResponse(link)
     }) : []
 }
 
@@ -82,6 +105,8 @@ const ChatsPage: FC = () => {
     const navigate = useNavigate();
     const [chats, setChats] = useState<ChatInfo[]>([]);
     const [messages, setMessages] = useState<MessageInfo[]>([]);
+    const [links, setLinks] = useState<LinkInfo[]>([]);
+
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messageTextarea = useRef<HTMLTextAreaElement>(null);
 
@@ -306,6 +331,38 @@ const ChatsPage: FC = () => {
         setChats([...chats, ...newChats]);
     }
 
+    const fetchLinks = async () => {
+        if (!activeDialog) {
+            return
+        }
+        const response = await ChatService.getLinks(activeDialog.id, 30);
+        console.log("fetchLinks response", response)
+        if (response.status != 200) {
+            return
+        }
+        const newLinks = linksFromResponse(response.data)
+        if (newLinks.length === 0) {
+            return
+        }
+        setLinks(newLinks);
+    }
+
+    const fetchBottomLinks = async () => {
+        if (!activeDialog || links.length === 0) {
+            return
+        }
+        const response = await ChatService.getLinksAfter(activeDialog.id, links[links.length - 1].id, 30);
+        console.log("getLinksAfter response", response)
+        if (response.status != 200) {
+            return
+        }
+        const newLinks = linksFromResponse(response.data)
+        if (newLinks.length === 0) {
+            return
+        }
+        setLinks([...links, ...newLinks]);
+    }
+
     const fetchTopDialogMessages = async (chatID: number, topMessageID: number): Promise<MessageInfo[]> => {
         const response = await ChatService.getMessagesBefore(chatID, topMessageID, dialogMessagesPerRequest);
         if (response.status != 200) {
@@ -443,9 +500,22 @@ const ChatsPage: FC = () => {
         }
     }
 
+    const smallTitleFromString = (str: string) => {
+        if (str.length == 0) {
+            return "e"
+        }
+        const splited = str.split(' ')
+        if (splited.length == 0) {
+            return "E";
+        } else if (splited.length == 1) {
+            return splited[0][0];
+        }
+        return splited[0][0] + splited[1][0];
+    }
+
     return (
         <div className="main-container">
-            <div className="chats-container">
+            <div className="left-container">
                 {chats.map((chat) => (
                     <Chat
                         key={chat.id.toString()}
@@ -465,7 +535,23 @@ const ChatsPage: FC = () => {
                     fetchBottomChats()
                 }} />
             </div>
-            <div className="right-container">
+            <div className="central-container">
+                {activeDialog &&
+                    <div style={
+                        {
+                            height: '50px', background: 'white', borderLeft: '1px solid #F7F7F7',
+                            borderRight: '1px solid #F7F7F7', borderBottom: '1px solid #F7F7F7',
+                            display: 'flex', alignItems: 'center', paddingLeft: '20px',
+                            justifyContent: 'space-between'
+                        }}>
+                        <div>
+                            <SmallAvatar smallTitle={smallTitleFromString(activeDialog.name)} fullName={activeDialog.name} />
+                        </div>
+                        <img
+                            src={infoIcon}
+                            style={{ width: '24px', height: '24px', marginRight: '30px' }}
+                            onClick={fetchLinks} />
+                    </div>}
                 {showMenu && <ContextMenu items={menuItems} menuStyle={menuStyle} />}
                 <div ref={messagesContainerRef} className={`messages-container ${showMenu ? "messages-container_disable-scroll" : ""}`}>
                     {messages.length ?
@@ -521,7 +607,7 @@ const ChatsPage: FC = () => {
                             <textarea
                                 ref={messageTextarea}
                                 className="message-textarea"
-                                placeholder="Введите текст..."
+                                placeholder="Enter message..."
                                 value={messageText}
                                 onChange={(event) => { setMessageText(event.target.value) }}
                             />
@@ -558,7 +644,7 @@ const ChatsPage: FC = () => {
                                     ref={instructionNameTextarea}
                                     value={instructionNameText}
                                     className="submit-instruction-name-textarea"
-                                    placeholder="Введите имя инстркуции..."
+                                    placeholder="Enter the name..."
                                     onChange={(event) => { setInstructionNameText(event.target.value) }}
                                 />
                                 <button
@@ -568,6 +654,69 @@ const ChatsPage: FC = () => {
                             </div>
                         </div>
                     }
+
+                </div>
+            </div>
+            <div className="right-container">
+                <div style={{ display: "flex", flexDirection: "column", marginTop: '16px', gap: '12px' }}>
+                    {/* personal info: name & surname */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <BigAvatar smallTitle={smallTitleFromString(activeDialog?.name || "")} fullName={activeDialog?.name || ""} />
+                        <img src={closeIcon} style={{ width: '14px', height: '14px' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: "32px" }}>
+                            {activeDialog?.name}
+                        </span>
+                        <span style={{ fontSize: "14px", color: "#3F3F46" }}>
+                            backend developer
+                        </span>
+                    </div>
+                </div>
+                <div style={
+                    {
+                        display: "flex", flexDirection: "column",
+                        background: '#FAFAFA',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        gap: '12px',
+                    }
+                }>
+                    {/* personal info: mail, username, github */}
+                    <PersonInfoOption title="email" text="test@mail.ru" />
+                    <PersonInfoOption title="username" text="testuser" />
+                    <PersonInfoOption title="gihub" text="yarkil" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'auto', paddingBottom: '16px' }}>
+                    {/* links, instructions options */}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <MenuOption title="Links" active={true} onClick={() => { }} />
+                        <MenuOption title="Instructions" active={false} onClick={() => { }} />
+                    </div>
+                    <div className="settings-item-container">
+                        {/* links/instructions list */}
+                        {links.map((link) => (
+                            <SettingsItem
+                                id={link.id}
+                                text={link.link}
+                            />
+                        ))}
+                        <Observer onIntercept={() => {
+                            fetchBottomLinks()
+                        }} />
+
+                        {/*
+                        <SettingsItem id={1} text={"https://www.apple.com/"} />
+                        <SettingsItem id={2} text={"https://www.apple.com/"} />
+                        <SettingsItem id={3} text={"https://www.apple.com/"} />
+                        <SettingsItem id={14} text={"https://www.apple.com/"} />
+                        <SettingsItem id={15} text={"https://www.apple.com/"} />
+                        <SettingsItem id={123} text={"https://www.apple.com/"} />
+                        <SettingsItem id={15} text={"https://www.apple.com/"} />
+                        <SettingsItem id={16} text={"https://www.apple.com/"} />
+                        <SettingsItem id={17} text={"https://www.apple.com/"} />
+                        <SettingsItem id={19} text={"https://www.apple.com/"} /> */}
+                    </div>
 
                 </div>
             </div>
