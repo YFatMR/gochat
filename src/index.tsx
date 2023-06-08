@@ -8,6 +8,7 @@ import LoginPage from "./pages/Login"
 import RegistrationPage from "./pages/Registration"
 import ChatsPage from "./pages/Chats"
 import SandboxPage from "./pages/Sandbox"
+import { InstructionPage } from "./pages/Instruction"
 
 const store = new Store()
 
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
   {
     path: "/s/",
     element: <SandboxPage />,
+  },
+  {
+    path: "/i/",
+    element: <InstructionPage />,
   },
 ]);
 

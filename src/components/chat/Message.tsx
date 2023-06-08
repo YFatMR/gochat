@@ -22,12 +22,12 @@ export interface MessageProps {
     messageWindowState: MessageWindowState
     handleSelectMessage: () => void
     selected: boolean
-    type: string // "NORMAL", "CODE"
+    type: number // "NORMAL - 1", "CODE - 2"
 }
 
 export const Message: FC<MessageProps> = ({ type, viewed, lastMessageObserver, text, createdAt, selfMessage, onIntercept, messageWindowState, handleSelectMessage, selected }) => {
-    const className = (selfMessage ? "message-container_self" : "message-container_other") + (type === "NORMAL" ? "" : "-code");
-    const timeClassName = (selfMessage ? (viewed ? "message-time_self" : "message-time_self-not-viewed") : "message-time_other") + (type === "NORMAL" ? "" : "-code");
+    const className = (selfMessage ? "message-container_self" : "message-container_other") + (type === 1 ? "" : "-code");
+    const timeClassName = (selfMessage ? (viewed ? "message-time_self" : "message-time_self-not-viewed") : "message-time_other") + (type === 1 ? "" : "-code");
     const selectable = messageWindowState === MessageWindowState.SELECTABLE;
     const selectImage = selected ? activeCheckboxImage : disabledCheckboxImage;
 
@@ -46,13 +46,13 @@ export const Message: FC<MessageProps> = ({ type, viewed, lastMessageObserver, t
 
     return (
         <>
-            <Observer onIntercept={onIntercept} />
+            <Observer height='10px' onIntercept={onIntercept} />
             <div onClick={handleMessageClick} className={classnames("message-wrapper", { "message-wrapper_self": selfMessage, "selectable": selectable })}>
 
-                {selectable && <img className={classnames("select-message-icon")} src={selectImage} ></img>}
+                {selectable && <img className={classnames({ "select-message-icon": !selfMessage, "select-message-icon-self": selfMessage })} src={selectImage} ></img>}
                 <div className={classnames("message-container", className, { "selectable": selectable })} ref={lastMessageObserver}>
 
-                    {type === "NORMAL" ?
+                    {type === 1 ?
                         <span className={classnames("message-text")} dangerouslySetInnerHTML={{ __html: text }} /> :
                         <CodeBlock
                             language="python"

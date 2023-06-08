@@ -101,11 +101,11 @@
     width: 280px;
     height: 80px;
     padding: 12px;
-    border: 0px solid magenta;
+    border: 0px solid #FAFAFA;
     border-radius: 12px;
     box-sizing: border-box;
     box-shadow: none;
-    background-color: magenta;
+    background-color: #FAFAFA;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -126,7 +126,7 @@
     }
 
     &:hover {
-        background-color: magenta;
+        background-color: #dfdfdf;
     }
 }
 
@@ -379,6 +379,12 @@
     margin-left: 26px;
 }
 
+.select-message-icon-self {
+    width: 20px;
+    height: 20px;
+    margin-left: 16px;
+}
+
 .current-message-container {
     width: auto;
     display: flex;
@@ -541,6 +547,25 @@
     width: 52px;
     background: #6366F1;
     border-radius: 8px;
+}
+
+.search-string-textarea {
+    width: 270px;
+    box-sizing: border-box;
+    border: 1px solid #D4D4D8;
+    padding: 10px;
+    font-size: 16px;
+    resize: none;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+    margin-right: 10px;
+    margin-left: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    height: 100px;
+    color: #000000;
+    border-radius: 8px;
+    height: 40px;
 }
 
 // CODE =======================================

@@ -9,10 +9,11 @@ import copyCodeIcon from "../../assets/copyTest.png"
 interface IProps {
     title: string
     text: string
+    url: string
 }
 
 
-export const PersonInfoOption: React.FC<IProps> = ({ title, text }) => {
+export const PersonInfoOption: React.FC<IProps> = ({ title, text, url = "" }) => {
     const navigate = useNavigate();
     const [isHoveredCopyOption, setIsHoveredCopyOption] = useState<boolean>(false);
 
@@ -34,7 +35,11 @@ export const PersonInfoOption: React.FC<IProps> = ({ title, text }) => {
         <div>
             <span style={{ fontSize: '14px' }}>{title}</span>
             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: '22px' }}>
-                <span style={{ color: '#6366F1', fontSize: '16px' }}>{text}</span>
+                {
+                    url.length > 0 ? <a style={{ color: '#6366F1', fontSize: '16px' }} href={url}>{text}</a> :
+                        <span style={{ color: '#6366F1', fontSize: '16px' }}>{text}</span>
+                }
+
                 <div
                     onClick={() => { navigator.clipboard.writeText(text) }}
                     style={copyCodeDivStyle}

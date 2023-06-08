@@ -28,35 +28,35 @@ const RegistrationForm: FC = () => {
                                 label="Name"
                                 value={name}
                                 type="text"
-                                placeholder="Enter your name"
+                                placeholder="Введите имя"
                                 onChange={(e) => setName(e.target.value)}
                             />
                             <InputField
                                 label="Surname"
                                 value={surname}
                                 type="text"
-                                placeholder="Enter your surname"
+                                placeholder="Введите фамилию"
                                 onChange={(e) => setSurname(e.target.value)}
                             />
                             <InputField
                                 label="Nickname"
                                 value={nickname}
                                 type="text"
-                                placeholder="Enter your nickname"
+                                placeholder="Введите никнейм"
                                 onChange={(e) => setNickname(e.target.value)}
                             />
                             <InputField
-                                label="Login"
+                                label="Email"
                                 value={login}
                                 type="text"
-                                placeholder="Enter your login"
+                                placeholder="Введите gjxne"
                                 onChange={(e) => setLogin(e.target.value)}
                             />
                             <InputField
                                 label="Password"
                                 value={password}
                                 type="password"
-                                placeholder="Enter your password"
+                                placeholder="Введите пароль"
                                 onChange={(e) => setPassword(e.target.value)}
                             />
 

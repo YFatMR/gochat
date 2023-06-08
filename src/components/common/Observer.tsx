@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 
 interface IProps {
     onIntercept: () => void,
+    height: string
 }
 
 export default function Observer({ onIntercept }: IProps) {
@@ -30,6 +31,6 @@ export default function Observer({ onIntercept }: IProps) {
     }, [onIntercept]);
 
     return (
-        <div ref={intersectRef} />
+        <div ref={intersectRef} style={{ display: 'block', margin: '5px' }} />
     )
 }

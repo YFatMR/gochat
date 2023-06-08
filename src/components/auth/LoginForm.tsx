@@ -48,14 +48,14 @@ export const LoginForm: FC<LoginFormProps> = ({ successRedirectUrl }) => {
                                 label="Email"
                                 value={email}
                                 type="email"
-                                placeholder="Enter your login"
+                                placeholder="Введите почту"
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                             <InputField
                                 label="Password"
                                 value={password}
                                 type="password"
-                                placeholder="Enter your password"
+                                placeholder="Введите пароль"
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>

@@ -51,7 +51,7 @@ export interface ChatInfo {
         createdAt: Date
         selfMessage: boolean
         viewed: boolean
-        type: string
+        type: number
     }
     lastReadMessage: {
         id: number
@@ -59,7 +59,7 @@ export interface ChatInfo {
         createdAt: Date
         selfMessage: boolean
         viewed: boolean
-        type: string
+        type: number
     }
 }
 
@@ -70,7 +70,7 @@ export interface MessageInfo {
     selfMessage: boolean
     viewed: boolean
     lastMessageObserver: any
-    type: string
+    type: number
 };
 
 export interface NewMessageWSEvent {
@@ -131,4 +131,69 @@ export interface LinkInfo {
     link: string
     messageID: number
     createdAt: Date
+}
+
+export interface Instruction {
+    instructionID: {
+        ID: number,
+    }
+    createdAt: string
+    title: string
+    text: string
+}
+
+export interface InstructionsResponse {
+    instructions: Instruction[]
+}
+
+export interface InstructionInfo {
+    id: number
+    createdAt: Date
+    title: string
+    text: string
+}
+
+
+export interface DialogMembersResponse {
+    selfID: {
+        ID: number
+    }
+    memberID: {
+        ID: number
+    }
+}
+
+export interface UserData {
+    nickname: string
+    name: string
+    surname: string
+    statusText: string
+    github: string | null
+    linkedin: string | null
+    publicEmail: string | null
+}
+
+export interface UserDataWithID {
+    userID: {
+        ID: number,
+    }
+    nickname: string
+    name: string
+    surname: string
+    statusText: string
+    github: string | null
+    linkedin: string | null
+    publicEmail: string | null
+}
+
+export interface GetUsersByPrefixResponse {
+    usersData: UserDataWithID[]
+}
+
+export interface DialogUnreadMessagesCount {
+    count: number | null
+}
+
+export interface BardAnswer {
+    text: string
 }
